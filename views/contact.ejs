@@ -1,0 +1,58 @@
+<%- include('partials/header', { title: 'Contact', siteSettings }) %>
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h1>Contact Us</h1>
+    <p><strong>Phone:</strong> <a href="tel:<%= siteSettings.phone %>"><%= siteSettings.phone %></a></p>
+    <p><strong>Email:</strong> <a href="mailto:<%= siteSettings.email %>"><%= siteSettings.email %></a></p>
+    <p><strong>Address:</strong> <%= siteSettings.address %></p>
+    <div class="ratio ratio-16x9 mt-3">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3024.695216765048!2d-74.00594938459418!3d40.71277597932674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDDCsDQyJzQ2LjAiTiA3NMKwMDAnMjEuNCJX!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
+        style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <h2 class="h4">Send a Message</h2>
+    <% if (errors && errors.length) { %><div class="alert alert-danger"><%= errors.join(', ') %></div><% } %>
+    <% if (success) { %><div class="alert alert-success">Thanks! Your inquiry has been received.</div><% } %>
+    <form action="/contact" method="POST" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Name *</label>
+        <input type="text" name="name" class="form-control" value="<%= (form && form.name) || '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Town *</label>
+        <input type="text" name="town" class="form-control" value="<%= (form && form.town) || '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" name="phoneNumber" class="form-control" value="<%= (form && form.phoneNumber) || '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email *</label>
+        <input type="email" name="email" class="form-control" value="<%= (form && form.email) || '' %>" required>
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Project Type *</label>
+        <select name="projectType" class="form-select" required>
+          <option value="">Select...</option>
+          <option <%= form && form.projectType==='New pool construction' ? 'selected':'' %> >New pool construction</option>
+          <option <%= form && form.projectType==='Renovation' ? 'selected':'' %> >Renovation</option>
+          <option <%= form && form.projectType==='Maintenance/Service' ? 'selected':'' %> >Maintenance/Service</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Message</label>
+        <textarea name="message" rows="4" class="form-control"><%= (form && form.message) || '' %></textarea>
+      </div>
+      <input type="text" name="honey" style="display:none">
+      <div class="col-12">
+        <button class="btn btn-primary">Send Message</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('partials/footer', { siteSettings }) %>
+
+

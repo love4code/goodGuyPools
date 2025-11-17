@@ -1,0 +1,26 @@
+<%- include('../partials/header', { title: 'Inquiry Detail', settings }) %>
+<div class="mb-3">
+  <a href="/admin/contacts" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h1 class="h4 mb-3"><%= contact.name %> · <span class="text-muted"><%= contact.town %></span></h1>
+    <p><strong>Phone:</strong> <a href="tel:<%= contact.phoneNumber %>"><%= contact.phoneNumber %></a></p>
+    <p><strong>Email:</strong> <a href="mailto:<%= contact.email %>"><%= contact.email %></a></p>
+    <p><strong>Project Type:</strong> <%= contact.projectType %></p>
+    <p><strong>Submitted:</strong> <%= new Date(contact.createdAt).toLocaleString() %></p>
+    <div class="mb-3">
+      <strong>Message:</strong>
+      <div class="border rounded p-3 bg-light"><%= (contact.message || '').replace(/\\n/g, '<br>') %></div>
+    </div>
+    <form action="/admin/contacts/<%= contact._id %>/toggle-read" method="POST" class="d-inline">
+      <button class="btn btn-outline-secondary"><%= contact.isRead ? 'Mark Unread' : 'Mark Read' %></button>
+    </form>
+    <form action="/admin/contacts/<%= contact._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this inquiry?')">
+      <button class="btn btn-outline-danger">Delete</button>
+    </form>
+  </div>
+  </div>
+<%- include('../partials/footer', { settings }) %>
+
+

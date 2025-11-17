@@ -1,0 +1,69 @@
+<%- include('../partials/header', { title: 'Projects', settings }) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Projects</h1>
+  <a href="/admin/projects/new" class="btn btn-primary">New Project</a>
+</div>
+<form class="row g-2 mb-3">
+  <div class="col-md-3"><input type="text" name="q" value="<%= q || '' %>" placeholder="Search..." class="form-control"></div>
+  <div class="col-md-3">
+    <select name="type" class="form-select">
+      <option value="">All Types</option>
+      <option value="New Pool Construction" <%= type==='New Pool Construction'?'selected':'' %>>New Pool Construction</option>
+      <option value="Renovation" <%= type==='Renovation'?'selected':'' %>>Renovation</option>
+      <option value="Maintenance/Service" <%= type==='Maintenance/Service'?'selected':'' %>>Maintenance/Service</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="status" class="form-select">
+      <option value="">All Statuses</option>
+      <option value="Planned" <%= status==='Planned'?'selected':'' %>>Planned</option>
+      <option value="In Progress" <%= status==='In Progress'?'selected':'' %>>In Progress</option>
+      <option value="Completed" <%= status==='Completed'?'selected':'' %>>Completed</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="featured" class="form-select">
+      <option value="">Featured?</option>
+      <option value="true" <%= featured==='true'?'selected':'' %>>Yes</option>
+    </select>
+  </div>
+  <div class="col-md-1"><button class="btn btn-outline-secondary w-100">Go</button></div>
+  </form>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Featured</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (projects && projects.length) { %>
+        <% projects.forEach(p => { %>
+          <tr>
+            <td><%= p.title %></td>
+            <td><%= p.projectType %></td>
+            <td><span class="badge bg-secondary"><%= p.status %></span></td>
+            <td><%= p.isFeatured ? 'Yes' : 'No' %></td>
+            <td><%= new Date(p.createdAt).toLocaleDateString() %></td>
+            <td class="text-end">
+              <a href="/admin/projects/<%= p._id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form action="/admin/projects/<%= p._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this project?')">
+                <button class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="6" class="text-center text-muted">No projects found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+<%- include('../partials/footer', { settings }) %>
+
+

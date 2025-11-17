@@ -1,0 +1,62 @@
+<%- include('../partials/header', { title: 'Site Settings', settings }) %>
+<h1 class="h4 mb-3">Site Settings</h1>
+<form action="/admin/settings" method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Company Name</label>
+    <input type="text" name="companyName" class="form-control" value="<%= settings.companyName %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Tagline</label>
+    <input type="text" name="tagline" class="form-control" value="<%= settings.tagline %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Address</label>
+    <input type="text" name="address" class="form-control" value="<%= settings.address %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Service Area</label>
+    <input type="text" name="serviceArea" class="form-control" value="<%= settings.serviceArea %>">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Phone</label>
+    <input type="text" name="phone" class="form-control" value="<%= settings.phone %>">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Email</label>
+    <input type="email" name="email" class="form-control" value="<%= settings.email %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Facebook URL</label>
+    <input type="url" name="facebookUrl" class="form-control" value="<%= settings.social.facebookUrl %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Instagram URL</label>
+    <input type="url" name="instagramUrl" class="form-control" value="<%= settings.social.instagramUrl %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">TikTok URL</label>
+    <input type="url" name="tiktokUrl" class="form-control" value="<%= settings.social.tiktokUrl %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">YouTube URL</label>
+    <input type="url" name="youtubeUrl" class="form-control" value="<%= settings.social.youtubeUrl %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Default Title</label>
+    <input type="text" name="defaultTitle" class="form-control" value="<%= settings.seo.defaultTitle %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Default Meta Description</label>
+    <input type="text" name="defaultMetaDescription" class="form-control" value="<%= settings.seo.defaultMetaDescription %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Default OG Image (URL)</label>
+    <input type="text" name="defaultOgImage" class="form-control" value="<%= settings.seo.defaultOgImage %>">
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">Save Settings</button>
+  </div>
+</form>
+<%- include('../partials/footer', { settings }) %>
+
+

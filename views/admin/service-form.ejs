@@ -1,0 +1,93 @@
+<%- include('../partials/header', { title: service ? 'Edit Service' : 'New Service', siteSettings }) %>
+<h1 class="h4 mb-3"><%= service ? 'Edit Service' : 'New Service' %></h1>
+<form action="<%= service ? '/admin/services/' + service._id : '/admin/services' %>" method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Title *</label>
+    <input type="text" name="title" class="form-control" value="<%= service ? service.title : '' %>" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Icon (Bootstrap Icons class)</label>
+    <div class="input-group">
+      <span class="input-group-text"><i id="iconPreview" class="bi <%= service && service.icon ? service.icon : '' %>"></i></span>
+      <input type="text" name="icon" id="iconInput" class="form-control" placeholder="e.g. bi-hammer" value="<%= service ? service.icon : '' %>">
+      <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#iconModal">Choose</button>
+    </div>
+    <div class="form-text">Uses <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>. Example: <code>bi-tools</code>, <code>bi-water</code>, <code>bi-house-gear</code>.</div>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Order</label>
+    <input type="number" name="order" class="form-control" value="<%= service ? service.order : 0 %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Description</label>
+    <textarea name="description" rows="6" class="form-control"><%= service ? service.description : '' %></textarea>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary"><%= service ? 'Save Changes' : 'Create Service' %></button>
+    <a href="/admin/services" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Icon Picker Modal -->
+<div class="modal fade" id="iconModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Choose an Icon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <input type="text" id="iconSearch" class="form-control" placeholder="Search icons (e.g. water, tools, hammer)...">
+          <div class="form-text">Pulls from Bootstrap Icons list. Click an icon to select it.</div>
+        </div>
+        <div class="row g-3" id="iconGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  let ICONS = [];
+  const grid = document.getElementById('iconGrid');
+  const search = document.getElementById('iconSearch');
+
+  async function loadIcons() {
+    try {
+      const res = await fetch('/public/js/icons.json');
+      ICONS = await res.json();
+      renderIcons(ICONS);
+    } catch (e) {
+      // fallback minimal set if fetch fails
+      ICONS = ['bi-tools','bi-water','bi-droplet','bi-wrench','bi-hammer','bi-house-gear','bi-stars','bi-sun'];
+      renderIcons(ICONS);
+    }
+  }
+
+  function renderIcons(list) {
+    grid.innerHTML = (list || []).map(c => `
+      <div class="col-3">
+        <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2" onclick="selectIcon('${c}')">
+          <i class="bi ${c}"></i><span class="small text-truncate" style="max-width:120px">${c}</span>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function selectIcon(cls) {
+    const input = document.getElementById('iconInput');
+    const prev = document.getElementById('iconPreview');
+    input.value = cls;
+    prev.className = 'bi ' + cls;
+    bootstrap.Modal.getInstance(document.getElementById('iconModal')).hide();
+  }
+  search.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    const filtered = ICONS.filter(c => c.toLowerCase().includes(q));
+    renderIcons(filtered);
+  });
+  // load on open to ensure freshest list
+  document.getElementById('iconModal').addEventListener('show.bs.modal', loadIcons, { once: true });
+</script>
+<%- include('../partials/footer', { siteSettings }) %>
+
+

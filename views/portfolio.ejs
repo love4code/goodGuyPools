@@ -1,0 +1,42 @@
+<%- include('partials/header', { title: 'Portfolio', siteSettings }) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Our Work</h1>
+  <form class="d-flex gap-2">
+    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      <option value="New Pool Construction" <%= type==='New Pool Construction'?'selected':'' %>>New Pool Construction</option>
+      <option value="Renovation" <%= type==='Renovation'?'selected':'' %>>Renovation</option>
+      <option value="Maintenance/Service" <%= type==='Maintenance/Service'?'selected':'' %>>Maintenance/Service</option>
+    </select>
+    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="Planned" <%= status==='Planned'?'selected':'' %>>Planned</option>
+      <option value="In Progress" <%= status==='In Progress'?'selected':'' %>>In Progress</option>
+      <option value="Completed" <%= status==='Completed'?'selected':'' %>>Completed</option>
+    </select>
+  </form>
+  </div>
+<div class="row g-4">
+  <% if (projects && projects.length) { %>
+    <% projects.forEach(p => { %>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <% if (p.featuredImage) { %>
+            <img src="<%= p.featuredImage %>" class="card-img-top" alt="<%= p.title %>">
+          <% } %>
+          <div class="card-body">
+            <h3 class="h5"><%= p.title %></h3>
+            <div class="text-muted small mb-2"><%= p.location || '' %> · <%= p.projectType %></div>
+            <p class="card-text"><%= p.shortDescription %></p>
+            <a href="/portfolio/<%= p.slug %>" class="btn btn-sm btn-primary">View Project</a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <div class="col-12"><div class="alert alert-secondary">No projects found.</div></div>
+  <% } %>
+</div>
+<%- include('partials/footer', { siteSettings }) %>
+
+

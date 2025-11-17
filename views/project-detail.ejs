@@ -1,0 +1,26 @@
+<%- include('partials/header', { title: project.title, siteSettings }) %>
+<div class="row">
+  <div class="col-lg-10 mx-auto">
+    <% if (project.featuredImage) { %>
+      <img src="<%= project.featuredImage %>" class="img-fluid rounded mb-4" alt="<%= project.title %>">
+    <% } %>
+    <h1 class="mb-1"><%= project.title %></h1>
+    <div class="text-muted mb-3"><%= project.location || '' %> · <%= project.projectType %> · <span class="badge bg-secondary"><%= project.status %></span></div>
+    <div class="mb-4"><%- project.description %></div>
+    <% if (project.gallery && project.gallery.length) { %>
+      <div class="row g-3">
+        <% project.gallery.forEach(img => { %>
+          <div class="col-md-4">
+            <img src="<%= img %>" class="img-fluid rounded" alt="">
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+    <div class="mt-4">
+      <a href="/contact" class="btn btn-primary">Request a similar project</a>
+    </div>
+  </div>
+</div>
+<%- include('partials/footer', { siteSettings }) %>
+
+

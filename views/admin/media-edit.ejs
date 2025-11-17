@@ -1,0 +1,35 @@
+<%- include('../partials/header', { title: 'Edit Media', siteSettings }) %>
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-body">
+        <h1 class="h5 mb-3">Edit Media</h1>
+        <div class="mb-3">
+          <img src="<%= media.filePath %>" class="img-fluid rounded" alt="<%= media.altText || media.title %>">
+          <div class="text-muted small mt-2"><%= media.originalFilename %> · <code><%= media.filePath %></code></div>
+        </div>
+        <form action="/admin/media/<%= media._id %>" method="POST" class="vstack gap-3">
+          <div>
+            <label class="form-label">Title</label>
+            <input type="text" name="title" class="form-control" value="<%= media.title %>">
+          </div>
+          <div>
+            <label class="form-label">Alt Text</label>
+            <input type="text" name="altText" class="form-control" value="<%= media.altText %>">
+          </div>
+          <div>
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" name="tags" class="form-control" value="<%= (media.tags || []).join(', ') %>">
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary">Save</button>
+            <a href="/admin/media" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer', { siteSettings }) %>
+
+

@@ -1,0 +1,58 @@
+<%- include('../partials/header', { title: 'Media Library', settings }) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Media Library</h1>
+</div>
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Upload Images</h2>
+        <form action="/admin/media/upload-multiple" method="POST" enctype="multipart/form-data" class="vstack gap-2">
+          <div>
+            <label class="form-label">Images *</label>
+            <input type="file" name="images" class="form-control" accept="image/*" multiple required>
+          </div>
+          <div>
+            <label class="form-label">Title</label>
+            <input type="text" name="title" class="form-control">
+          </div>
+          <div>
+            <label class="form-label">Alt Text</label>
+            <input type="text" name="altText" class="form-control">
+          </div>
+          <div>
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" name="tags" class="form-control">
+          </div>
+          <button class="btn btn-primary">Upload</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="row g-3">
+      <% if (items && items.length) { %>
+        <% items.forEach(m => { %>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <img src="<%= m.filePath %>" class="card-img-top" style="object-fit:cover;height:180px" alt="<%= m.altText || m.title %>">
+              <div class="card-body">
+                <div class="small fw-semibold"><%= m.title || m.originalFilename %></div>
+                <div class="text-muted small"><%= m.filePath %></div>
+                  <a href="/admin/media/<%= m._id %>/edit" class="btn btn-sm btn-outline-primary mt-2">Edit</a>
+                <form action="/admin/media/<%= m._id %>/delete" method="POST" class="mt-2" onsubmit="return confirm('Delete this image?')">
+                  <button class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="col-12"><div class="alert alert-secondary">No media yet.</div></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer', { settings }) %>
+
+

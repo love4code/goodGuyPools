@@ -1,0 +1,6 @@
+body { background:#fff; }
+.card img { object-fit: cover; }
+.navbar .navbar-brand { letter-spacing: .3px; }
+.ratio iframe { width:100%; height:100%; }
+
+

@@ -1,0 +1,150 @@
+<%- include('partials/header', { title: 'Home', siteSettings }) %>
+
+<section class="mb-5">
+  <div class="p-5 bg-light rounded-3 text-center">
+    <h1 class="display-5 fw-bold text-primary">Good Guy Pools</h1>
+    <p class="lead mb-4">Custom Swimming Pools & Outdoor Living</p>
+    <a class="btn btn-primary btn-lg" href="/contact">Request a Free Quote</a>
+  </div>
+</section>
+
+<section class="mb-5">
+  <h2 class="h3 mb-4">Our Services</h2>
+  <div class="row g-4">
+    <% if (services && services.length) { %> <% services.forEach(s => { %>
+    <div class="col-md-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <h3 class="h5 d-flex align-items-center gap-2">
+            <% if (s.icon) { %><i class="bi <%= s.icon %>"></i><% } %>
+            <span><%= s.title %></span>
+          </h3>
+          <p><%= s.description %></p>
+        </div>
+      </div>
+    </div>
+    <% }) %> <% } else { %>
+    <div class="col-12">
+      <div class="alert alert-secondary">
+        No services yet. Add some in Admin → Services.
+      </div>
+    </div>
+    <% } %>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h3 mb-0">Recent Projects</h2>
+    <a href="/portfolio" class="btn btn-outline-primary btn-sm">View All</a>
+  </div>
+  <div class="row g-4">
+    <% if (projects && projects.length) { %> <% projects.forEach(p => { %>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <% if (p.featuredImage) { %>
+        <img
+          src="<%= p.featuredImage %>"
+          class="card-img-top"
+          alt="<%= p.title %>"
+        />
+        <% } %>
+        <div class="card-body">
+          <h3 class="h5"><%= p.title %></h3>
+          <div class="text-muted small mb-2">
+            <%= p.location || '' %> · <%= p.projectType %>
+          </div>
+          <p class="card-text"><%= p.shortDescription %></p>
+          <a href="/portfolio/<%= p.slug %>" class="btn btn-sm btn-primary"
+            >View Project</a
+          >
+        </div>
+      </div>
+    </div>
+    <% }) %> <% } else { %>
+    <div class="col-12">
+      <div class="alert alert-secondary">No featured projects yet.</div>
+    </div>
+    <% } %>
+  </div>
+</section>
+
+<section class="mb-5">
+  <div class="row text-center g-4">
+    <div class="col-md-3">
+      <div class="p-3 bg-light rounded">Licensed & Insured</div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-light rounded">Free Estimates</div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-light rounded">
+        Serving <%= (siteSettings && siteSettings.serviceArea) || 'Your Area' %>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="p-3 bg-light rounded">Quality Craftsmanship</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h4 mb-3">Get In Touch</h2>
+          <% if (success) { %>
+          <div class="alert alert-success">
+            Thanks! Your inquiry has been received.
+          </div>
+          <% } %> <% if (errors && errors.length) { %>
+          <div class="alert alert-danger"><%= errors.join(', ') %></div>
+          <% } %>
+          <form action="/contact" method="POST" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Name *</label>
+              <input type="text" name="name" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Town *</label>
+              <input type="text" name="town" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number *</label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email *</label>
+              <input type="email" name="email" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Project Type *</label>
+              <select name="projectType" class="form-select" required>
+                <option value="">Select...</option>
+                <option>New pool construction</option>
+                <option>Renovation</option>
+                <option>Maintenance/Service</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Message</label>
+              <textarea name="message" rows="4" class="form-control"></textarea>
+            </div>
+            <input type="text" name="honey" style="display: none" />
+            <div class="col-12">
+              <button class="btn btn-primary">Send Message</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer', { siteSettings }) %>

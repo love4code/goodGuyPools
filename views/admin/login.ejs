@@ -1,0 +1,25 @@
+<%- include('../partials/header', { title: 'Admin Login', settings }) %>
+<div class="row">
+  <div class="col-md-5 mx-auto">
+    <% if (error && error.length) { %><div class="alert alert-danger"><%= error %></div><% } %>
+    <div class="card">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Admin Login</h1>
+        <form action="/admin/login" method="POST" class="vstack gap-3">
+          <div>
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required>
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button class="btn btn-primary">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer', { settings }) %>
+
+

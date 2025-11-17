@@ -1,0 +1,117 @@
+<%- include('../partials/header', { title: project ? 'Edit Project' : 'New Project', settings }) %>
+<h1 class="h4 mb-3"><%= project ? 'Edit Project' : 'New Project' %></h1>
+<form action="<%= project ? '/admin/projects/' + project._id : '/admin/projects' %>" method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Title *</label>
+    <input type="text" name="title" class="form-control" required value="<%= project ? project.title : '' %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Location</label>
+    <input type="text" name="location" class="form-control" value="<%= project ? project.location : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Short Description *</label>
+    <input type="text" name="shortDescription" class="form-control" required value="<%= project ? project.shortDescription : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Description (HTML allowed)</label>
+    <textarea name="description" rows="6" class="form-control"><%= project ? project.description : '' %></textarea>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Project Type *</label>
+    <select name="projectType" class="form-select" required>
+      <option value="">Select...</option>
+      <option <%= project && project.projectType==='New Pool Construction' ? 'selected':'' %> >New Pool Construction</option>
+      <option <%= project && project.projectType==='Renovation' ? 'selected':'' %> >Renovation</option>
+      <option <%= project && project.projectType==='Maintenance/Service' ? 'selected':'' %> >Maintenance/Service</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Status</label>
+    <select name="status" class="form-select">
+      <option <%= project && project.status==='Planned' ? 'selected':'' %> >Planned</option>
+      <option <%= project && project.status==='In Progress' ? 'selected':'' %> >In Progress</option>
+      <option <%= project && project.status==='Completed' ? 'selected':'' %> >Completed</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Featured</label><br>
+    <input type="checkbox" name="isFeatured" <%= project && project.isFeatured ? 'checked':'' %> >
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Featured Image (from media library path)</label>
+    <div class="input-group">
+      <input type="text" id="featuredImage" name="featuredImage" class="form-control" placeholder="/uploads/..." value="<%= project ? project.featuredImage : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('featuredImage')">Select</button>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Gallery Images (comma separated paths)</label>
+    <div class="input-group">
+      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="/uploads/a.webp,/uploads/b.webp" value="<%= project && project.gallery ? project.gallery.join(',') : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('gallery')">Select</button>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Start Date</label>
+    <input type="date" name="startDate" class="form-control" value="<%= project && project.startDate ? project.startDate.toISOString().slice(0,10) : '' %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">End Date</label>
+    <input type="date" name="endDate" class="form-control" value="<%= project && project.endDate ? project.endDate.toISOString().slice(0,10) : '' %>">
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary"><%= project ? 'Save Changes' : 'Create Project' %></button>
+    <a href="/admin/projects" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Media Modal -->
+<div class="modal fade" id="mediaModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Select Media</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mediaGrid" class="row g-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  let targetInput = null;
+  async function openMediaModal(targetId) {
+    targetInput = document.getElementById(targetId);
+    const grid = document.getElementById('mediaGrid');
+    grid.innerHTML = '<div class="text-center py-5">Loading...</div>';
+    const res = await fetch('/admin/media/api/list');
+    const items = await res.json();
+    grid.innerHTML = items.map(m => `
+      <div class="col-md-3">
+        <div class="card h-100" onclick="selectMedia('${m.filePath}', '${targetId}')">
+          <img src="${m.filePath}" class="card-img-top" style="object-fit:cover;height:180px">
+          <div class="card-body small">
+            <div class="fw-semibold">${m.title || m.originalFilename}</div>
+            <div class="text-muted">${m.filePath}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    new bootstrap.Modal(document.getElementById('mediaModal')).show();
+  }
+  function selectMedia(path, targetId) {
+    if (targetId === 'gallery') {
+      const existing = targetInput.value ? targetInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      existing.push(path);
+      targetInput.value = Array.from(new Set(existing)).join(',');
+    } else {
+      targetInput.value = path;
+    }
+    bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
+  }
+</script>
+<%- include('../partials/footer', { settings }) %>
+
+
