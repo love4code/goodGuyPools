@@ -1,0 +1,60 @@
+<%- include('../partials/header', { title: 'Quote Request Detail', settings }) %>
+<div class="mb-3">
+  <a href="/admin/product-quotes" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h1 class="h4 mb-3"><%= quote.name %> · <span class="text-muted"><%= quote.city %></span></h1>
+    
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <p><strong>Phone:</strong> <a href="tel:<%= quote.phone %>"><%= quote.phone %></a></p>
+        <p><strong>Email:</strong> <a href="mailto:<%= quote.email %>"><%= quote.email %></a></p>
+      </div>
+      <div class="col-md-6">
+        <p><strong>Service Type:</strong> <span class="badge bg-primary"><%= quote.serviceType %></span></p>
+        <p><strong>Submitted:</strong> <%= new Date(quote.createdAt).toLocaleString() %></p>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <strong>Product:</strong>
+      <div class="border rounded p-3 bg-light">
+        <% if (quote.productId) { %>
+          <a href="/products/<%= quote.productId.slug %>" target="_blank" class="h5 text-decoration-none"><%= quote.productName %></a>
+        <% } else { %>
+          <span class="h5"><%= quote.productName %></span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (quote.selectedSizes && quote.selectedSizes.length > 0) { %>
+      <div class="mb-3">
+        <strong>Selected Pool Sizes:</strong>
+        <div class="mt-2">
+          <% quote.selectedSizes.forEach(size => { %>
+            <span class="badge bg-info me-2"><%= size %></span>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (quote.message) { %>
+      <div class="mb-3">
+        <strong>Message:</strong>
+        <div class="border rounded p-3 bg-light"><%= (quote.message || '').replace(/\n/g, '<br>') %></div>
+      </div>
+    <% } %>
+
+    <div class="mt-4">
+      <form action="/admin/product-quotes/<%= quote._id %>/toggle-read" method="POST" class="d-inline">
+        <button class="btn btn-outline-secondary"><%= quote.isRead ? 'Mark Unread' : 'Mark Read' %></button>
+      </form>
+      <form action="/admin/product-quotes/<%= quote._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this quote request?')">
+        <button class="btn btn-outline-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer', { settings }) %>
+

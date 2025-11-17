@@ -9,6 +9,7 @@ const settingsController = require('../controllers/settingsController');
 const { upload, processImage } = require('../middleware/upload');
 const serviceController = require('../controllers/serviceController');
 const productController = require('../controllers/productController');
+const productQuoteController = require('../controllers/productQuoteController');
 
 // Auth
 router.get('/login', adminController.getLogin);
@@ -47,6 +48,20 @@ router.post(
   contactController.toggleRead,
 );
 router.post('/contacts/:id/delete', requireAuth, contactController.remove);
+
+// Product Quotes
+router.get('/product-quotes', requireAuth, productQuoteController.list);
+router.get('/product-quotes/:id', requireAuth, productQuoteController.detail);
+router.post(
+  '/product-quotes/:id/toggle-read',
+  requireAuth,
+  productQuoteController.toggleRead,
+);
+router.post(
+  '/product-quotes/:id/delete',
+  requireAuth,
+  productQuoteController.remove,
+);
 
 // Media
 router.get('/media', requireAuth, mediaController.list);

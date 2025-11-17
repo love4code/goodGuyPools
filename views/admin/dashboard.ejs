@@ -15,7 +15,15 @@
     <div class="card text-center">
       <div class="card-body">
         <div class="display-6"><%= stats.contactCount %></div>
-        <div class="text-muted">Inquiries</div>
+        <div class="text-muted">Contact Inquiries</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="display-6"><%= stats.productQuoteCount || 0 %></div>
+        <div class="text-muted">Product Quotes</div>
       </div>
     </div>
   </div>
@@ -27,20 +35,12 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="display-6"><%= stats.topPages && stats.topPages[0] ? stats.topPages[0].count : 0 %></div>
-        <div class="text-muted">Top Page Visits</div>
-      </div>
-    </div>
-  </div>
 </div>
 <div class="row g-4">
   <div class="col-md-6">
     <div class="card h-100">
       <div class="card-body">
-        <h2 class="h5">Recent Inquiries</h2>
+        <h2 class="h5">Recent Contact Inquiries</h2>
         <ul class="list-group list-group-flush">
           <% if (recentContacts && recentContacts.length) { %>
             <% recentContacts.forEach(c => { %>
@@ -53,14 +53,51 @@
               </li>
             <% }) %>
           <% } else { %>
-            <li class="list-group-item">No inquiries yet.</li>
+            <li class="list-group-item">No contact inquiries yet.</li>
           <% } %>
         </ul>
+        <div class="mt-2">
+          <a href="/admin/contacts" class="btn btn-sm btn-outline-secondary">View All Contacts</a>
+        </div>
       </div>
     </div>
   </div>
   <div class="col-md-6">
     <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5">Recent Product Quote Requests</h2>
+        <ul class="list-group list-group-flush">
+          <% if (recentProductQuotes && recentProductQuotes.length) { %>
+            <% recentProductQuotes.forEach(q => { %>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><%= q.name %></strong> · <span class="text-muted"><%= q.city %></span>
+                  <div class="small text-muted">
+                    <span class="badge bg-info"><%= q.productName %></span>
+                    · <%= q.serviceType %>
+                    <% if (q.selectedSizes && q.selectedSizes.length > 0) { %>
+                      · Sizes: <%= q.selectedSizes.join(', ') %>
+                    <% } %>
+                  </div>
+                  <div class="small text-muted"><%= new Date(q.createdAt).toLocaleString() %></div>
+                </div>
+                <a class="btn btn-sm btn-outline-primary" href="/admin/product-quotes/<%= q._id %>">View</a>
+              </li>
+            <% }) %>
+          <% } else { %>
+            <li class="list-group-item">No product quote requests yet.</li>
+          <% } %>
+        </ul>
+        <div class="mt-2">
+          <a href="/admin/product-quotes" class="btn btn-sm btn-outline-secondary">View All Quotes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mt-2">
+  <div class="col-md-12">
+    <div class="card">
       <div class="card-body">
         <h2 class="h5">Top Pages</h2>
         <ul class="list-group list-group-flush">

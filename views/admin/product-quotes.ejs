@@ -1,0 +1,87 @@
+<%- include('../partials/header', { title: 'Product Quote Requests', settings }) %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Product Quote Requests</h1>
+</div>
+<form class="row g-2 mb-3">
+  <div class="col-md-5">
+    <input type="text" name="q" class="form-control" placeholder="Search by name, email, city, or product..." value="<%= q || '' %>">
+  </div>
+  <div class="col-md-5">
+    <select name="read" class="form-select">
+      <option value="">All</option>
+      <option value="read" <%= read==='read'?'selected':'' %>>Read</option>
+      <option value="unread" <%= read==='unread'?'selected':'' %>>Unread</option>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Filter</button></div>
+</form>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>City</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Product</th>
+        <th>Service Type</th>
+        <th>Sizes</th>
+        <th>When</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (quotes && quotes.length) { %>
+        <% quotes.forEach(q => { %>
+          <tr class="<%= q.isRead ? '' : 'table-warning' %>">
+            <td><%= q.name %></td>
+            <td><%= q.city %></td>
+            <td><%= q.email %></td>
+            <td><%= q.phone %></td>
+            <td>
+              <% if (q.productId) { %>
+                <a href="/products/<%= q.productId.slug %>" target="_blank"><%= q.productName %></a>
+              <% } else { %>
+                <%= q.productName %>
+              <% } %>
+            </td>
+            <td><%= q.serviceType %></td>
+            <td>
+              <% if (q.selectedSizes && q.selectedSizes.length > 0) { %>
+                <span class="badge bg-secondary"><%= q.selectedSizes.join(', ') %></span>
+              <% } else { %>
+                <span class="text-muted">-</span>
+              <% } %>
+            </td>
+            <td><%= new Date(q.createdAt).toLocaleString() %></td>
+            <td class="text-end">
+              <a href="/admin/product-quotes/<%= q._id %>" class="btn btn-sm btn-outline-primary">View</a>
+              <form action="/admin/product-quotes/<%= q._id %>/toggle-read" method="POST" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary"><%= q.isRead ? 'Mark Unread' : 'Mark Read' %></button>
+              </form>
+              <form action="/admin/product-quotes/<%= q._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this quote request?')">
+                <button class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="9" class="text-center text-muted">No quote requests found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+<% if (total > perPage) { %>
+  <nav>
+    <ul class="pagination justify-content-center">
+      <% const totalPages = Math.ceil(total / perPage) %>
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= i %><%= q ? '&q=' + encodeURIComponent(q) : '' %><%= read ? '&read=' + read : '' %>"><%= i %></a>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+<% } %>
+<%- include('../partials/footer', { settings }) %>
+

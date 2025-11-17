@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const Media = require('../models/Media');
+const ProductQuote = require('../models/ProductQuote');
 
 // Admin Controllers
 exports.list = async (req, res) => {
@@ -386,6 +387,20 @@ exports.requestQuote = async (req, res) => {
           : [selectedSizes];
       }
     }
+
+    // Save quote request to database
+    await ProductQuote.create({
+      name,
+      city,
+      email,
+      phone,
+      message: message || '',
+      serviceType,
+      selectedSizes: sizesArray,
+      productId: product._id,
+      productName: product.name,
+      isRead: false,
+    });
 
     // Send email
     const { sendQuoteRequestEmail } = require('../utils/email');
