@@ -1,6 +1,6 @@
 <%- include('../partials/header', { title: project ? 'Edit Project' : 'New Project', settings }) %>
 <h1 class="h4 mb-3"><%= project ? 'Edit Project' : 'New Project' %></h1>
-<form action="<%= project ? '/admin/projects/' + project._id : '/admin/projects' %>" method="POST" class="row g-3">
+<form action="<%= project ? '/admin/projects/' + project._id : '/admin/projects' %>" method="POST" enctype="multipart/form-data" class="row g-3">
   <div class="col-md-6">
     <label class="form-label">Title *</label>
     <input type="text" name="title" class="form-control" required value="<%= project ? project.title : '' %>">
@@ -45,11 +45,26 @@
       <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('featuredImage')">Select</button>
     </div>
   </div>
-  <div class="col-md-6">
-    <label class="form-label">Gallery Images (comma separated paths)</label>
-    <div class="input-group">
-      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="/uploads/a.webp,/uploads/b.webp" value="<%= project && project.gallery ? project.gallery.join(',') : '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('gallery')">Select</button>
+  <div class="col-md-12">
+    <label class="form-label">Gallery Images</label>
+    <div class="mb-2">
+      <input type="file" name="galleryImages" id="galleryImages" class="form-control" multiple accept="image/*">
+      <small class="text-muted">You can select multiple images at once (up to 20 images)</small>
+    </div>
+    <div class="input-group mb-2">
+      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="Or enter comma-separated paths: /api/images/...,/api/images/..." value="<%= project && project.gallery ? project.gallery.join(',') : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('gallery')">Select from Library</button>
+    </div>
+    <div id="galleryPreview" class="row g-2 mt-2">
+      <% if (project && project.gallery && project.gallery.length > 0) { %>
+        <% project.gallery.forEach(img => { %>
+          <div class="col-md-2">
+            <div class="position-relative">
+              <img src="<%= img %>" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
     </div>
   </div>
   <div class="col-md-6">
@@ -106,11 +121,60 @@
       const existing = targetInput.value ? targetInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
       existing.push(path);
       targetInput.value = Array.from(new Set(existing)).join(',');
+      updateGalleryPreview();
     } else {
       targetInput.value = path;
     }
     bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
   }
+
+  // Preview selected files before upload
+  document.getElementById('galleryImages').addEventListener('change', function(e) {
+    const preview = document.getElementById('galleryPreview');
+    preview.innerHTML = '';
+    if (this.files.length > 0) {
+      Array.from(this.files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'col-md-2';
+            div.innerHTML = `
+              <div class="position-relative">
+                <img src="${e.target.result}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+                <small class="d-block text-truncate">${file.name}</small>
+              </div>
+            `;
+            preview.appendChild(div);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    } else {
+      updateGalleryPreview();
+    }
+  });
+
+  // Update gallery preview from text input
+  function updateGalleryPreview() {
+    const galleryInput = document.getElementById('gallery');
+    const preview = document.getElementById('galleryPreview');
+    const paths = galleryInput.value ? galleryInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    // Only show preview if no files are selected for upload
+    if (document.getElementById('galleryImages').files.length === 0 && paths.length > 0) {
+      preview.innerHTML = paths.map(path => `
+        <div class="col-md-2">
+          <div class="position-relative">
+            <img src="${path}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover" onerror="this.style.display='none'">
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Initial preview load
+  updateGalleryPreview();
 </script>
 <%- include('../partials/footer', { settings }) %>
 
