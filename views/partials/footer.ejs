@@ -1,6 +1,19 @@
       </div>
     </main>
-    <footer class="border-top py-4 mt-5">
+    <footer class="border-top py-4 mt-5" style="background-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.backgroundColor : '#ffffff' %>; border-top-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.borderColor : '#dee2e6' %> !important; color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.textColor : '#6c757d' %>;">
+      <style>
+        footer {
+          background-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.backgroundColor : '#ffffff' %> !important;
+          color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.textColor : '#6c757d' %> !important;
+          border-top-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.borderColor : '#dee2e6' %> !important;
+        }
+        footer a {
+          color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.linkColor : '#0d6efd' %> !important;
+        }
+        footer a:hover {
+          color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.linkHoverColor : '#0a58ca' %> !important;
+        }
+      </style>
       <div class="container small d-flex flex-column flex-md-row justify-content-between align-items-center">
         <div>
           <strong><%= (siteSettings && siteSettings.companyName) || 'Goodfella Pools' %></strong>

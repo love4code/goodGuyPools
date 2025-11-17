@@ -53,10 +53,245 @@
     <label class="form-label">Default OG Image (URL)</label>
     <input type="text" name="defaultOgImage" class="form-control" value="<%= settings.seo.defaultOgImage %>">
   </div>
+
+  <!-- Theme Customization Section -->
+  <div class="col-12">
+    <hr class="my-4">
+    <h2 class="h5 mb-3">Theme Customization</h2>
+    <p class="text-muted small">Customize the appearance of your header and footer with predefined themes or custom colors.</p>
+  </div>
+
+  <div class="col-md-12">
+    <label class="form-label">Theme Preset</label>
+    <select name="themePreset" id="themePreset" class="form-select" onchange="applyPreset()">
+      <option value="default" <%= settings.theme && settings.theme.preset === 'default' ? 'selected' : '' %>>Default (White)</option>
+      <option value="ocean-blue" <%= settings.theme && settings.theme.preset === 'ocean-blue' ? 'selected' : '' %>>Ocean Blue</option>
+      <option value="sky-blue" <%= settings.theme && settings.theme.preset === 'sky-blue' ? 'selected' : '' %>>Sky Blue</option>
+      <option value="navy-blue" <%= settings.theme && settings.theme.preset === 'navy-blue' ? 'selected' : '' %>>Navy Blue</option>
+      <option value="royal-blue" <%= settings.theme && settings.theme.preset === 'royal-blue' ? 'selected' : '' %>>Royal Blue</option>
+      <option value="dark" <%= settings.theme && settings.theme.preset === 'dark' ? 'selected' : '' %>>Dark Theme</option>
+      <option value="light" <%= settings.theme && settings.theme.preset === 'light' ? 'selected' : '' %>>Light Theme</option>
+      <option value="custom" <%= settings.theme && settings.theme.preset === 'custom' ? 'selected' : '' %>>Custom Colors</option>
+    </select>
+    <small class="text-muted">Select a preset theme or choose "Custom Colors" to set your own</small>
+  </div>
+
+  <!-- Header Colors -->
+  <div class="col-12">
+    <h3 class="h6 mt-4 mb-3">Header Colors</h3>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Background Color</label>
+    <div class="input-group">
+      <input type="color" name="headerBackgroundColor" id="headerBackgroundColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.header ? settings.theme.header.backgroundColor : '#ffffff' %>">
+      <input type="text" id="headerBackgroundColorText" class="form-control" value="<%= settings.theme && settings.theme.header ? settings.theme.header.backgroundColor : '#ffffff' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Brand Text Color</label>
+    <div class="input-group">
+      <input type="color" name="headerTextColor" id="headerTextColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.header ? settings.theme.header.textColor : '#0d6efd' %>">
+      <input type="text" id="headerTextColorText" class="form-control" value="<%= settings.theme && settings.theme.header ? settings.theme.header.textColor : '#0d6efd' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Link Color</label>
+    <div class="input-group">
+      <input type="color" name="headerLinkColor" id="headerLinkColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.header ? settings.theme.header.linkColor : '#000000' %>">
+      <input type="text" id="headerLinkColorText" class="form-control" value="<%= settings.theme && settings.theme.header ? settings.theme.header.linkColor : '#000000' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Link Hover Color</label>
+    <div class="input-group">
+      <input type="color" name="headerLinkHoverColor" id="headerLinkHoverColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.header ? settings.theme.header.linkHoverColor : '#0d6efd' %>">
+      <input type="text" id="headerLinkHoverColorText" class="form-control" value="<%= settings.theme && settings.theme.header ? settings.theme.header.linkHoverColor : '#0d6efd' %>">
+    </div>
+  </div>
+
+  <!-- Footer Colors -->
+  <div class="col-12">
+    <h3 class="h6 mt-4 mb-3">Footer Colors</h3>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Background Color</label>
+    <div class="input-group">
+      <input type="color" name="footerBackgroundColor" id="footerBackgroundColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.backgroundColor : '#ffffff' %>">
+      <input type="text" id="footerBackgroundColorText" class="form-control" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.backgroundColor : '#ffffff' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Text Color</label>
+    <div class="input-group">
+      <input type="color" name="footerTextColor" id="footerTextColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.textColor : '#6c757d' %>">
+      <input type="text" id="footerTextColorText" class="form-control" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.textColor : '#6c757d' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Link Color</label>
+    <div class="input-group">
+      <input type="color" name="footerLinkColor" id="footerLinkColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.linkColor : '#0d6efd' %>">
+      <input type="text" id="footerLinkColorText" class="form-control" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.linkColor : '#0d6efd' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Link Hover Color</label>
+    <div class="input-group">
+      <input type="color" name="footerLinkHoverColor" id="footerLinkHoverColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.linkHoverColor : '#0a58ca' %>">
+      <input type="text" id="footerLinkHoverColorText" class="form-control" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.linkHoverColor : '#0a58ca' %>">
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Border Color</label>
+    <div class="input-group">
+      <input type="color" name="footerBorderColor" id="footerBorderColor" class="form-control form-control-color" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.borderColor : '#dee2e6' %>">
+      <input type="text" id="footerBorderColorText" class="form-control" value="<%= settings.theme && settings.theme.footer ? settings.theme.footer.borderColor : '#dee2e6' %>">
+    </div>
+  </div>
+
   <div class="col-12">
     <button class="btn btn-primary">Save Settings</button>
   </div>
 </form>
+
+<script>
+  const presets = {
+    'default': {
+      header: { backgroundColor: '#ffffff', textColor: '#0d6efd', linkColor: '#000000', linkHoverColor: '#0d6efd' },
+      footer: { backgroundColor: '#ffffff', textColor: '#6c757d', linkColor: '#0d6efd', linkHoverColor: '#0a58ca', borderColor: '#dee2e6' }
+    },
+    'ocean-blue': {
+      header: { backgroundColor: '#006994', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#b3e5fc' },
+      footer: { backgroundColor: '#003d5b', textColor: '#ffffff', linkColor: '#80d6ff', linkHoverColor: '#b3e5fc', borderColor: '#006994' }
+    },
+    'sky-blue': {
+      header: { backgroundColor: '#87ceeb', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#003d5b' },
+      footer: { backgroundColor: '#5fb3d3', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#003d5b', borderColor: '#87ceeb' }
+    },
+    'navy-blue': {
+      header: { backgroundColor: '#001f3f', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#7fdbff' },
+      footer: { backgroundColor: '#001122', textColor: '#ffffff', linkColor: '#7fdbff', linkHoverColor: '#b3e5fc', borderColor: '#001f3f' }
+    },
+    'royal-blue': {
+      header: { backgroundColor: '#4169e1', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#e6f2ff' },
+      footer: { backgroundColor: '#1e3a8a', textColor: '#ffffff', linkColor: '#93c5fd', linkHoverColor: '#dbeafe', borderColor: '#4169e1' }
+    },
+    'dark': {
+      header: { backgroundColor: '#212529', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#0d6efd' },
+      footer: { backgroundColor: '#1a1d20', textColor: '#adb5bd', linkColor: '#6ea8fe', linkHoverColor: '#9ec5fe', borderColor: '#495057' }
+    },
+    'light': {
+      header: { backgroundColor: '#f8f9fa', textColor: '#0d6efd', linkColor: '#495057', linkHoverColor: '#0d6efd' },
+      footer: { backgroundColor: '#ffffff', textColor: '#6c757d', linkColor: '#0d6efd', linkHoverColor: '#0a58ca', borderColor: '#dee2e6' }
+    }
+  };
+
+  function applyPreset() {
+    const preset = document.getElementById('themePreset').value;
+    if (preset === 'custom') return; // Don't override custom colors
+    
+    const theme = presets[preset];
+    if (theme) {
+      // Header colors
+      document.getElementById('headerBackgroundColor').value = theme.header.backgroundColor;
+      document.getElementById('headerBackgroundColorText').value = theme.header.backgroundColor;
+      document.getElementById('headerTextColor').value = theme.header.textColor;
+      document.getElementById('headerTextColorText').value = theme.header.textColor;
+      document.getElementById('headerLinkColor').value = theme.header.linkColor;
+      document.getElementById('headerLinkColorText').value = theme.header.linkColor;
+      document.getElementById('headerLinkHoverColor').value = theme.header.linkHoverColor;
+      document.getElementById('headerLinkHoverColorText').value = theme.header.linkHoverColor;
+      
+      // Footer colors
+      document.getElementById('footerBackgroundColor').value = theme.footer.backgroundColor;
+      document.getElementById('footerBackgroundColorText').value = theme.footer.backgroundColor;
+      document.getElementById('footerTextColor').value = theme.footer.textColor;
+      document.getElementById('footerTextColorText').value = theme.footer.textColor;
+      document.getElementById('footerLinkColor').value = theme.footer.linkColor;
+      document.getElementById('footerLinkColorText').value = theme.footer.linkColor;
+      document.getElementById('footerLinkHoverColor').value = theme.footer.linkHoverColor;
+      document.getElementById('footerLinkHoverColorText').value = theme.footer.linkHoverColor;
+      document.getElementById('footerBorderColor').value = theme.footer.borderColor;
+      document.getElementById('footerBorderColorText').value = theme.footer.borderColor;
+    }
+  }
+
+  // Sync color picker with text input
+  document.getElementById('headerBackgroundColor').addEventListener('change', function() {
+    document.getElementById('headerBackgroundColorText').value = this.value;
+  });
+  document.getElementById('headerTextColor').addEventListener('change', function() {
+    document.getElementById('headerTextColorText').value = this.value;
+  });
+  document.getElementById('headerLinkColor').addEventListener('change', function() {
+    document.getElementById('headerLinkColorText').value = this.value;
+  });
+  document.getElementById('headerLinkHoverColor').addEventListener('change', function() {
+    document.getElementById('headerLinkHoverColorText').value = this.value;
+  });
+  document.getElementById('footerBackgroundColor').addEventListener('change', function() {
+    document.getElementById('footerBackgroundColorText').value = this.value;
+  });
+  document.getElementById('footerTextColor').addEventListener('change', function() {
+    document.getElementById('footerTextColorText').value = this.value;
+  });
+  document.getElementById('footerLinkColor').addEventListener('change', function() {
+    document.getElementById('footerLinkColorText').value = this.value;
+  });
+  document.getElementById('footerLinkHoverColor').addEventListener('change', function() {
+    document.getElementById('footerLinkHoverColorText').value = this.value;
+  });
+  document.getElementById('footerBorderColor').addEventListener('change', function() {
+    document.getElementById('footerBorderColorText').value = this.value;
+  });
+
+  // Sync text input with color picker
+  document.getElementById('headerBackgroundColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('headerBackgroundColor').value = this.value;
+    }
+  });
+  document.getElementById('headerTextColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('headerTextColor').value = this.value;
+    }
+  });
+  document.getElementById('headerLinkColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('headerLinkColor').value = this.value;
+    }
+  });
+  document.getElementById('headerLinkHoverColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('headerLinkHoverColor').value = this.value;
+    }
+  });
+  document.getElementById('footerBackgroundColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('footerBackgroundColor').value = this.value;
+    }
+  });
+  document.getElementById('footerTextColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('footerTextColor').value = this.value;
+    }
+  });
+  document.getElementById('footerLinkColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('footerLinkColor').value = this.value;
+    }
+  });
+  document.getElementById('footerLinkHoverColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('footerLinkHoverColor').value = this.value;
+    }
+  });
+  document.getElementById('footerBorderColorText').addEventListener('change', function() {
+    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+      document.getElementById('footerBorderColor').value = this.value;
+    }
+  });
+</script>
 <%- include('../partials/footer', { settings }) %>
 
 

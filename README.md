@@ -56,6 +56,8 @@ construction company. Built with Node.js, Express, MongoDB, and Bootstrap 5.
 - **Product Quote Management**: View and manage product quote requests
 - **Services Management**: Manage service offerings
 - **Site Settings**: Configure site-wide settings, SEO, and social links
+- **Theme Customization**: Customize header and footer colors with predefined
+  themes or custom colors
 
 ## Getting Started
 
@@ -356,6 +358,77 @@ The admin dashboard provides:
 - View details including selected sizes
 - Mark as read/unread
 - Delete requests
+
+### Site Settings & Theme Customization
+
+**Site Settings:**
+
+- Configure company information (name, address, contact details)
+- Set up social media links (Facebook, Instagram, TikTok, YouTube)
+- Configure SEO settings (default title, meta description, OG image)
+
+**Theme Customization:**
+
+The application includes a comprehensive theme customization system that allows
+you to customize the appearance of your header and footer.
+
+**Access Theme Settings:**
+
+1. Go to Admin → Settings
+2. Scroll to the "Theme Customization" section
+
+**Predefined Themes:**
+
+The system includes 8 predefined themes:
+
+1. **Default (White)** - Clean white background with blue accents
+2. **Ocean Blue** - Deep ocean blue header (#006994) with darker blue footer
+3. **Sky Blue** - Light sky blue header (#87ceeb) with medium blue footer
+4. **Navy Blue** - Dark navy header (#001f3f) with darker navy footer
+5. **Royal Blue** - Royal blue header (#4169e1) with darker blue footer
+6. **Dark Theme** - Dark header (#212529) and footer for modern look
+7. **Light Theme** - Light gray header (#f8f9fa) with white footer
+8. **Custom Colors** - Manual color selection for complete control
+
+**Using Preset Themes:**
+
+1. Select a theme from the "Theme Preset" dropdown
+2. All color fields will automatically populate with the theme's colors
+3. Click "Save Settings" to apply
+4. Changes are immediately visible on the frontend
+
+**Custom Color Customization:**
+
+If you select "Custom Colors" or want to fine-tune a preset:
+
+**Header Colors:**
+
+- **Background Color**: Main header/navbar background
+- **Brand Text Color**: Company name/logo color
+- **Link Color**: Navigation link text color
+- **Link Hover Color**: Navigation link hover state color
+
+**Footer Colors:**
+
+- **Background Color**: Footer background color
+- **Text Color**: Footer text color
+- **Link Color**: Footer link color
+- **Link Hover Color**: Footer link hover state color
+- **Border Color**: Top border color of footer
+
+**Color Input Methods:**
+
+- Use the color picker for visual selection
+- Enter hex color codes directly in the text field (e.g., `#0d6efd`)
+- Both methods stay synchronized automatically
+
+**Tips:**
+
+- Use contrasting colors for text readability
+- Test hover states to ensure good visibility
+- Consider accessibility - ensure sufficient color contrast
+- Preview changes by saving and viewing the frontend
+- Colors are applied via inline styles for immediate effect
 
 ## Rich Text Editor
 

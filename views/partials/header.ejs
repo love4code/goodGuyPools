@@ -21,9 +21,36 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/public/css/style.css" />
+    <style>
+      /* Header Theme Styles */
+      .navbar {
+        background-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.backgroundColor : '#ffffff' %> !important;
+        border-bottom-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.footer) ? siteSettings.theme.footer.borderColor : '#dee2e6' %> !important;
+      }
+      .navbar-brand {
+        color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.textColor : '#0d6efd' %> !important;
+      }
+      .navbar-nav .nav-link {
+        color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.linkColor : '#000000' %> !important;
+      }
+      .navbar-nav .nav-link:hover,
+      .navbar-nav .nav-link:focus {
+        color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.linkHoverColor : '#0d6efd' %> !important;
+      }
+      .navbar-nav .dropdown-menu {
+        background-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.backgroundColor : '#ffffff' %> !important;
+      }
+      .navbar-nav .dropdown-item {
+        color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.linkColor : '#000000' %> !important;
+      }
+      .navbar-nav .dropdown-item:hover {
+        background-color: <%= (siteSettings && siteSettings.theme && siteSettings.theme.header) ? siteSettings.theme.header.linkHoverColor : '#0d6efd' %> !important;
+        color: #ffffff !important;
+      }
+    </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom">
       <div class="container">
         <a class="navbar-brand fw-bold text-primary" href="/"
           ><%= (siteSettings && siteSettings.companyName) || 'Goodfella Pools'
