@@ -1,4 +1,4 @@
-# Goodfella Pools CMS
+# Good Guy Pools CMS
 
 Production-ready CMS for a swimming pool sales and construction company.
 
