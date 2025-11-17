@@ -13,28 +13,146 @@ exports.newForm = (req, res) => {
 
 exports.create = async (req, res) => {
   try {
+    // Process uploaded featured image (single file)
+    let featuredImagePath = req.body.image || '';
+    if (
+      req.files &&
+      req.files.featuredImageUpload &&
+      req.files.featuredImageUpload.length > 0
+    ) {
+      const featuredFile = req.files.featuredImageUpload[0];
+      if (featuredFile && featuredFile.path) {
+        await Media.create({
+          gridfsId: featuredFile.gridfsId,
+          filePath: featuredFile.path,
+          originalFilename: featuredFile.originalname,
+          title: req.body.name || '',
+          altText: '',
+          tags: ['product', 'featured'],
+        });
+        featuredImagePath = featuredFile.path;
+      }
+    }
+
+    // Process uploaded gallery images
+    const uploadedGalleryPaths = [];
+    if (
+      req.files &&
+      req.files.galleryImages &&
+      req.files.galleryImages.length > 0
+    ) {
+      for (const file of req.files.galleryImages) {
+        if (file.path) {
+          // Save to Media library
+          await Media.create({
+            gridfsId: file.gridfsId,
+            filePath: file.path,
+            originalFilename: file.originalname,
+            title: req.body.name || '',
+            altText: '',
+            tags: ['product'],
+          });
+          uploadedGalleryPaths.push(file.path);
+        }
+      }
+    }
+
+    // Combine uploaded images with manually entered paths
+    const manualGallery = Array.isArray(req.body.gallery)
+      ? req.body.gallery
+      : req.body.gallery
+      ? req.body.gallery
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean)
+      : [];
+    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+
     const {
       name,
       description,
       shortDescription,
       image,
       sizes,
+      sku,
+      category,
+      brand,
+      material,
+      shape,
+      depth,
+      capacity,
+      dimensions,
+      weight,
+      warranty,
+      installationTime,
+      features,
+      specifications,
+      priceRange,
+      availability,
+      metaTitle,
+      metaDescription,
+      keywords,
+      tags,
+      notes,
       isActive,
+      isFeatured,
       order,
     } = req.body;
+
     const sizesArray = sizes
       ? sizes
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
       : [];
+    const featuresArray = features
+      ? features
+          .split(',')
+          .map((f) => f.trim())
+          .filter(Boolean)
+      : [];
+    const keywordsArray = keywords
+      ? keywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      : [];
+    const tagsArray = tags
+      ? tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+
     await Product.create({
       name,
       description: description || '',
       shortDescription: shortDescription || '',
-      image: image || '',
+      image: featuredImagePath || image || '',
+      gallery: allGalleryPaths,
       sizes: sizesArray,
+      sku: sku || '',
+      category: category || '',
+      brand: brand || '',
+      material: material || '',
+      shape: shape || '',
+      depth: depth || '',
+      capacity: capacity || '',
+      dimensions: dimensions || '',
+      weight: weight || '',
+      warranty: warranty || '',
+      installationTime: installationTime || '',
+      features: featuresArray,
+      specifications: specifications || '',
+      priceRange: priceRange || '',
+      availability: availability || 'In Stock',
+      metaTitle: metaTitle || '',
+      metaDescription: metaDescription || '',
+      keywords: keywordsArray,
+      tags: tagsArray,
+      notes: notes || '',
       isActive: isActive === 'on',
+      isFeatured: isFeatured === 'on',
       order: Number(order) || 0,
     });
     req.flash('success', 'Product created');
@@ -56,28 +174,146 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    // Process uploaded featured image (single file)
+    let featuredImagePath = req.body.image || '';
+    if (
+      req.files &&
+      req.files.featuredImageUpload &&
+      req.files.featuredImageUpload.length > 0
+    ) {
+      const featuredFile = req.files.featuredImageUpload[0];
+      if (featuredFile && featuredFile.path) {
+        await Media.create({
+          gridfsId: featuredFile.gridfsId,
+          filePath: featuredFile.path,
+          originalFilename: featuredFile.originalname,
+          title: req.body.name || '',
+          altText: '',
+          tags: ['product', 'featured'],
+        });
+        featuredImagePath = featuredFile.path;
+      }
+    }
+
+    // Process uploaded gallery images
+    const uploadedGalleryPaths = [];
+    if (
+      req.files &&
+      req.files.galleryImages &&
+      req.files.galleryImages.length > 0
+    ) {
+      for (const file of req.files.galleryImages) {
+        if (file.path) {
+          // Save to Media library
+          await Media.create({
+            gridfsId: file.gridfsId,
+            filePath: file.path,
+            originalFilename: file.originalname,
+            title: req.body.name || '',
+            altText: '',
+            tags: ['product'],
+          });
+          uploadedGalleryPaths.push(file.path);
+        }
+      }
+    }
+
+    // Combine uploaded images with manually entered paths
+    const manualGallery = Array.isArray(req.body.gallery)
+      ? req.body.gallery
+      : req.body.gallery
+      ? req.body.gallery
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean)
+      : [];
+    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+
     const {
       name,
       description,
       shortDescription,
       image,
       sizes,
+      sku,
+      category,
+      brand,
+      material,
+      shape,
+      depth,
+      capacity,
+      dimensions,
+      weight,
+      warranty,
+      installationTime,
+      features,
+      specifications,
+      priceRange,
+      availability,
+      metaTitle,
+      metaDescription,
+      keywords,
+      tags,
+      notes,
       isActive,
+      isFeatured,
       order,
     } = req.body;
+
     const sizesArray = sizes
       ? sizes
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
       : [];
+    const featuresArray = features
+      ? features
+          .split(',')
+          .map((f) => f.trim())
+          .filter(Boolean)
+      : [];
+    const keywordsArray = keywords
+      ? keywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      : [];
+    const tagsArray = tags
+      ? tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+
     const update = {
       name,
       description: description || '',
       shortDescription: shortDescription || '',
-      image: image || '',
+      image: featuredImagePath || image || '',
+      gallery: allGalleryPaths,
       sizes: sizesArray,
+      sku: sku || '',
+      category: category || '',
+      brand: brand || '',
+      material: material || '',
+      shape: shape || '',
+      depth: depth || '',
+      capacity: capacity || '',
+      dimensions: dimensions || '',
+      weight: weight || '',
+      warranty: warranty || '',
+      installationTime: installationTime || '',
+      features: featuresArray,
+      specifications: specifications || '',
+      priceRange: priceRange || '',
+      availability: availability || 'In Stock',
+      metaTitle: metaTitle || '',
+      metaDescription: metaDescription || '',
+      keywords: keywordsArray,
+      tags: tagsArray,
+      notes: notes || '',
       isActive: isActive === 'on',
+      isFeatured: isFeatured === 'on',
       order: Number(order) || 0,
       updatedAt: new Date(),
     };

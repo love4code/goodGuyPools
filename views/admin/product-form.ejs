@@ -1,38 +1,200 @@
 <%- include('../partials/header', { title: product ? 'Edit Product' : 'New Product', siteSettings }) %>
 <h1 class="h4 mb-3"><%= product ? 'Edit Product' : 'New Product' %></h1>
-<form action="<%= product ? '/admin/products/' + product._id : '/admin/products' %>" method="POST" class="row g-3">
+
+<form action="<%= product ? '/admin/products/' + product._id : '/admin/products' %>" method="POST" enctype="multipart/form-data" class="row g-3">
+  
+  <!-- Basic Information -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3">Basic Information</h5>
+  </div>
   <div class="col-md-6">
-    <label class="form-label">Name *</label>
+    <label class="form-label">Product Name *</label>
     <input type="text" name="name" class="form-control" value="<%= product ? product.name : '' %>" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">SKU/Product Code</label>
+    <input type="text" name="sku" class="form-control" value="<%= product ? product.sku : '' %>" placeholder="e.g., POOL-001">
   </div>
   <div class="col-md-3">
     <label class="form-label">Order</label>
     <input type="number" name="order" class="form-control" value="<%= product ? product.order : 0 %>">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Status</label><br>
-    <input type="checkbox" name="isActive" <%= product && product.isActive ? 'checked' : '' %> > Active
   </div>
   <div class="col-md-12">
     <label class="form-label">Short Description</label>
     <input type="text" name="shortDescription" class="form-control" value="<%= product ? product.shortDescription : '' %>" placeholder="Brief description for listings">
   </div>
   <div class="col-md-12">
-    <label class="form-label">Description (HTML allowed)</label>
+    <label class="form-label">Full Description (HTML allowed)</label>
     <textarea name="description" rows="6" class="form-control"><%= product ? product.description : '' %></textarea>
   </div>
-  <div class="col-md-6">
-    <label class="form-label">Product Image (from media library path)</label>
-    <div class="input-group">
-      <input type="text" id="image" name="image" class="form-control" placeholder="/api/images/..." value="<%= product ? product.image : '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('image')">Select</button>
-    </div>
+
+  <!-- Media Section -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3 mt-4">Product Media</h5>
   </div>
   <div class="col-md-6">
-    <label class="form-label">Sizes (comma separated, e.g., 12x24, 14x28, 16x32)</label>
+    <label class="form-label">Featured Image</label>
+    <div class="input-group mb-2">
+      <input type="text" id="image" name="image" class="form-control" placeholder="/api/images/..." value="<%= product ? product.image : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('image')">Select from Library</button>
+    </div>
+    <div class="mb-3">
+      <input type="file" name="featuredImageUpload" id="featuredImageUpload" class="form-control" accept="image/*">
+      <small class="text-muted">Or upload a new featured image</small>
+    </div>
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Product Gallery Images</label>
+    <div class="mb-2">
+      <input type="file" name="galleryImages" id="galleryImages" class="form-control" multiple accept="image/*">
+      <small class="text-muted">You can select multiple images at once (up to 20 images)</small>
+    </div>
+    <div class="input-group mb-2">
+      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="Or enter comma-separated paths: /api/images/...,/api/images/..." value="<%= product && product.gallery ? product.gallery.join(',') : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('gallery')">Select from Library</button>
+    </div>
+    <div id="galleryPreview" class="row g-2 mt-2">
+      <% if (product && product.gallery && product.gallery.length > 0) { %>
+        <% product.gallery.forEach(img => { %>
+          <div class="col-md-2">
+            <div class="position-relative">
+              <img src="<%= img %>" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Product Specifications -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3 mt-4">Product Specifications</h5>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Category</label>
+    <input type="text" name="category" class="form-control" value="<%= product ? product.category : '' %>" placeholder="e.g., Inground Pools, Above Ground">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Brand/Manufacturer</label>
+    <input type="text" name="brand" class="form-control" value="<%= product ? product.brand : '' %>">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Material</label>
+    <select name="material" class="form-select">
+      <option value="">Select Material</option>
+      <option value="Fiberglass" <%= product && product.material==='Fiberglass' ? 'selected' : '' %>>Fiberglass</option>
+      <option value="Vinyl" <%= product && product.material==='Vinyl' ? 'selected' : '' %>>Vinyl</option>
+      <option value="Concrete" <%= product && product.material==='Concrete' ? 'selected' : '' %>>Concrete</option>
+      <option value="Steel" <%= product && product.material==='Steel' ? 'selected' : '' %>>Steel</option>
+      <option value="Other" <%= product && product.material==='Other' ? 'selected' : '' %>>Other</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Shape</label>
+    <select name="shape" class="form-select">
+      <option value="">Select Shape</option>
+      <option value="Rectangle" <%= product && product.shape==='Rectangle' ? 'selected' : '' %>>Rectangle</option>
+      <option value="Oval" <%= product && product.shape==='Oval' ? 'selected' : '' %>>Oval</option>
+      <option value="Round" <%= product && product.shape==='Round' ? 'selected' : '' %>>Round</option>
+      <option value="Freeform" <%= product && product.shape==='Freeform' ? 'selected' : '' %>>Freeform</option>
+      <option value="L-Shaped" <%= product && product.shape==='L-Shaped' ? 'selected' : '' %>>L-Shaped</option>
+      <option value="Other" <%= product && product.shape==='Other' ? 'selected' : '' %>>Other</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Depth</label>
+    <input type="text" name="depth" class="form-control" value="<%= product ? product.depth : '' %>" placeholder="e.g., 3-8 feet">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Water Capacity</label>
+    <input type="text" name="capacity" class="form-control" value="<%= product ? product.capacity : '' %>" placeholder="e.g., 15,000 gallons">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Dimensions</label>
+    <input type="text" name="dimensions" class="form-control" value="<%= product ? product.dimensions : '' %>" placeholder="e.g., 20ft x 40ft">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Weight</label>
+    <input type="text" name="weight" class="form-control" value="<%= product ? product.weight : '' %>" placeholder="e.g., 5,000 lbs">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Available Sizes (comma separated)</label>
     <input type="text" name="sizes" class="form-control" placeholder="12x24, 14x28, 16x32" value="<%= product && product.sizes ? product.sizes.join(', ') : '' %>">
     <small class="text-muted">These will appear as selectable tags on the product page</small>
   </div>
+  <div class="col-md-6">
+    <label class="form-label">Installation Time</label>
+    <input type="text" name="installationTime" class="form-control" value="<%= product ? product.installationTime : '' %>" placeholder="e.g., 2-4 weeks">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Features (comma separated)</label>
+    <input type="text" name="features" class="form-control" placeholder="LED Lighting, Heating System, Salt Water System" value="<%= product && product.features ? product.features.join(', ') : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Technical Specifications (HTML allowed)</label>
+    <textarea name="specifications" rows="4" class="form-control" placeholder="Detailed technical specifications..."><%= product ? product.specifications : '' %></textarea>
+  </div>
+
+  <!-- Pricing & Availability -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3 mt-4">Pricing & Availability</h5>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Price Range</label>
+    <input type="text" name="priceRange" class="form-control" value="<%= product ? product.priceRange : '' %>" placeholder="e.g., $25,000 - $50,000">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Availability</label>
+    <select name="availability" class="form-select">
+      <option value="In Stock" <%= product && product.availability==='In Stock' ? 'selected' : '' %>>In Stock</option>
+      <option value="Out of Stock" <%= product && product.availability==='Out of Stock' ? 'selected' : '' %>>Out of Stock</option>
+      <option value="Pre-Order" <%= product && product.availability==='Pre-Order' ? 'selected' : '' %>>Pre-Order</option>
+      <option value="Discontinued" <%= product && product.availability==='Discontinued' ? 'selected' : '' %>>Discontinued</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Warranty</label>
+    <input type="text" name="warranty" class="form-control" value="<%= product ? product.warranty : '' %>" placeholder="e.g., 10 years">
+  </div>
+
+  <!-- SEO & Marketing -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3 mt-4">SEO & Marketing</h5>
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Meta Title</label>
+    <input type="text" name="metaTitle" class="form-control" value="<%= product ? product.metaTitle : '' %>" placeholder="SEO title (leave empty to use product name)">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Meta Description</label>
+    <textarea name="metaDescription" rows="2" class="form-control" placeholder="SEO description (150-160 characters recommended)"><%= product ? product.metaDescription : '' %></textarea>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">SEO Keywords (comma separated)</label>
+    <input type="text" name="keywords" class="form-control" placeholder="pool, swimming, fiberglass" value="<%= product && product.keywords ? product.keywords.join(', ') : '' %>">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Product Tags (comma separated)</label>
+    <input type="text" name="tags" class="form-control" placeholder="premium, featured, new" value="<%= product && product.tags ? product.tags.join(', ') : '' %>">
+  </div>
+
+  <!-- Status & Settings -->
+  <div class="col-12">
+    <h5 class="border-bottom pb-2 mb-3 mt-4">Status & Settings</h5>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Status</label><br>
+    <input type="checkbox" name="isActive" <%= product && product.isActive ? 'checked' : '' %> > Active
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Featured</label><br>
+    <input type="checkbox" name="isFeatured" <%= product && product.isFeatured ? 'checked' : '' %> > Featured Product
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Internal Notes</label>
+    <textarea name="notes" rows="3" class="form-control" placeholder="Internal notes (not visible to customers)"><%= product ? product.notes : '' %></textarea>
+  </div>
+
   <div class="col-12">
     <button class="btn btn-primary"><%= product ? 'Save Changes' : 'Create Product' %></button>
     <a href="/admin/products" class="btn btn-outline-secondary">Cancel</a>
@@ -75,9 +237,63 @@
     new bootstrap.Modal(document.getElementById('mediaModal')).show();
   }
   function selectMedia(path, targetId) {
-    targetInput.value = path;
+    if (targetId === 'gallery') {
+      const existing = targetInput.value ? targetInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      existing.push(path);
+      targetInput.value = Array.from(new Set(existing)).join(',');
+      updateGalleryPreview();
+    } else {
+      targetInput.value = path;
+    }
     bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
   }
+
+  // Preview selected files before upload
+  document.getElementById('galleryImages').addEventListener('change', function(e) {
+    const preview = document.getElementById('galleryPreview');
+    preview.innerHTML = '';
+    if (this.files.length > 0) {
+      Array.from(this.files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'col-md-2';
+            div.innerHTML = `
+              <div class="position-relative">
+                <img src="${e.target.result}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+                <small class="d-block text-truncate">${file.name}</small>
+              </div>
+            `;
+            preview.appendChild(div);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    } else {
+      updateGalleryPreview();
+    }
+  });
+
+  // Update gallery preview from text input
+  function updateGalleryPreview() {
+    const galleryInput = document.getElementById('gallery');
+    const preview = document.getElementById('galleryPreview');
+    const paths = galleryInput.value ? galleryInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    // Only show preview if no files are selected for upload
+    if (document.getElementById('galleryImages').files.length === 0 && paths.length > 0) {
+      preview.innerHTML = paths.map(path => `
+        <div class="col-md-2">
+          <div class="position-relative">
+            <img src="${path}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover" onerror="this.style.display='none'">
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Initial preview load
+  updateGalleryPreview();
 </script>
 <%- include('../partials/footer', { siteSettings }) %>
-

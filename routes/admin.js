@@ -96,9 +96,27 @@ router.post('/services/:id/delete', requireAuth, serviceController.remove);
 // Products CRUD
 router.get('/products', requireAuth, productController.list);
 router.get('/products/new', requireAuth, productController.newForm);
-router.post('/products', requireAuth, productController.create);
+router.post(
+  '/products',
+  requireAuth,
+  upload.fields([
+    { name: 'featuredImageUpload', maxCount: 1 },
+    { name: 'galleryImages', maxCount: 20 },
+  ]),
+  require('../middleware/upload').processImages,
+  productController.create,
+);
 router.get('/products/:id/edit', requireAuth, productController.editForm);
-router.post('/products/:id', requireAuth, productController.update);
+router.post(
+  '/products/:id',
+  requireAuth,
+  upload.fields([
+    { name: 'featuredImageUpload', maxCount: 1 },
+    { name: 'galleryImages', maxCount: 20 },
+  ]),
+  require('../middleware/upload').processImages,
+  productController.update,
+);
 router.post('/products/:id/delete', requireAuth, productController.remove);
 
 module.exports = router;
