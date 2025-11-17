@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "icons:update": "node scripts/update-icons.js"
+    "icons:update": "node scripts/update-icons.js",
+    "postinstall": "npm rebuild bcrypt --build-from-source || true"
   },
   "keywords": [
     "pools",
