@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const publicController = require('../controllers/publicController');
+const productController = require('../controllers/productController');
 const { getGridFSBucket } = require('../utils/gridfs');
 const mongoose = require('mongoose');
 
@@ -10,6 +11,11 @@ router.get('/portfolio', publicController.getPortfolio);
 router.get('/portfolio/:slug', publicController.getProjectDetail);
 router.get('/contact', publicController.getContact);
 router.post('/contact', publicController.postContact);
+
+// Products
+router.get('/products', productController.publicList);
+router.get('/products/:slug', productController.publicDetail);
+router.post('/products/quote', productController.requestQuote);
 
 // Serve images from GridFS
 router.get('/api/images/:id', async (req, res) => {

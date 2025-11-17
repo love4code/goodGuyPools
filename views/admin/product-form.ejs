@@ -1,0 +1,83 @@
+<%- include('../partials/header', { title: product ? 'Edit Product' : 'New Product', siteSettings }) %>
+<h1 class="h4 mb-3"><%= product ? 'Edit Product' : 'New Product' %></h1>
+<form action="<%= product ? '/admin/products/' + product._id : '/admin/products' %>" method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Name *</label>
+    <input type="text" name="name" class="form-control" value="<%= product ? product.name : '' %>" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Order</label>
+    <input type="number" name="order" class="form-control" value="<%= product ? product.order : 0 %>">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Status</label><br>
+    <input type="checkbox" name="isActive" <%= product && product.isActive ? 'checked' : '' %> > Active
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Short Description</label>
+    <input type="text" name="shortDescription" class="form-control" value="<%= product ? product.shortDescription : '' %>" placeholder="Brief description for listings">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Description (HTML allowed)</label>
+    <textarea name="description" rows="6" class="form-control"><%= product ? product.description : '' %></textarea>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Product Image (from media library path)</label>
+    <div class="input-group">
+      <input type="text" id="image" name="image" class="form-control" placeholder="/api/images/..." value="<%= product ? product.image : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('image')">Select</button>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Sizes (comma separated, e.g., 12x24, 14x28, 16x32)</label>
+    <input type="text" name="sizes" class="form-control" placeholder="12x24, 14x28, 16x32" value="<%= product && product.sizes ? product.sizes.join(', ') : '' %>">
+    <small class="text-muted">These will appear as selectable tags on the product page</small>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary"><%= product ? 'Save Changes' : 'Create Product' %></button>
+    <a href="/admin/products" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Media Modal -->
+<div class="modal fade" id="mediaModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Select Media</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mediaGrid" class="row g-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  let targetInput = null;
+  async function openMediaModal(targetId) {
+    targetInput = document.getElementById(targetId);
+    const grid = document.getElementById('mediaGrid');
+    grid.innerHTML = '<div class="text-center py-5">Loading...</div>';
+    const res = await fetch('/admin/media/api/list');
+    const items = await res.json();
+    grid.innerHTML = items.map(m => `
+      <div class="col-md-3">
+        <div class="card h-100" onclick="selectMedia('${m.filePath}', '${targetId}')">
+          <img src="${m.filePath}" class="card-img-top" style="object-fit:cover;height:180px">
+          <div class="card-body small">
+            <div class="fw-semibold">${m.title || m.originalFilename}</div>
+            <div class="text-muted">${m.filePath}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    new bootstrap.Modal(document.getElementById('mediaModal')).show();
+  }
+  function selectMedia(path, targetId) {
+    targetInput.value = path;
+    bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
+  }
+</script>
+<%- include('../partials/footer', { siteSettings }) %>
+

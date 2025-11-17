@@ -8,6 +8,7 @@ const contactController = require('../controllers/contactController');
 const settingsController = require('../controllers/settingsController');
 const { upload, processImage } = require('../middleware/upload');
 const serviceController = require('../controllers/serviceController');
+const productController = require('../controllers/productController');
 
 // Auth
 router.get('/login', adminController.getLogin);
@@ -91,5 +92,13 @@ router.post('/services', requireAuth, serviceController.create);
 router.get('/services/:id/edit', requireAuth, serviceController.editForm);
 router.post('/services/:id', requireAuth, serviceController.update);
 router.post('/services/:id/delete', requireAuth, serviceController.remove);
+
+// Products CRUD
+router.get('/products', requireAuth, productController.list);
+router.get('/products/new', requireAuth, productController.newForm);
+router.post('/products', requireAuth, productController.create);
+router.get('/products/:id/edit', requireAuth, productController.editForm);
+router.post('/products/:id', requireAuth, productController.update);
+router.post('/products/:id/delete', requireAuth, productController.remove);
 
 module.exports = router;

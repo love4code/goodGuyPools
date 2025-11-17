@@ -1,0 +1,36 @@
+<%- include('partials/header', { title: 'Products', siteSettings }) %>
+<div class="container my-5">
+  <h1 class="h2 mb-4">Our Products</h1>
+  <div class="row g-4">
+    <% if (products && products.length) { %>
+      <% products.forEach(p => { %>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <% if (p.image) { %>
+              <img src="<%= p.image %>" class="card-img-top" alt="<%= p.name %>" style="height:250px;object-fit:cover">
+            <% } %>
+            <div class="card-body">
+              <h3 class="h5 card-title"><%= p.name %></h3>
+              <p class="card-text"><%= p.shortDescription || p.description %></p>
+              <% if (p.sizes && p.sizes.length > 0) { %>
+                <div class="mb-2">
+                  <small class="text-muted">Available Sizes: </small>
+                  <% p.sizes.forEach(size => { %>
+                    <span class="badge bg-secondary me-1"><%= size %></span>
+                  <% }) %>
+                </div>
+              <% } %>
+              <a href="/products/<%= p.slug %>" class="btn btn-primary">Request Quote</a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="col-12">
+        <div class="alert alert-secondary">No products available at this time.</div>
+      </div>
+    <% } %>
+  </div>
+</div>
+<%- include('partials/footer', { siteSettings }) %>
+

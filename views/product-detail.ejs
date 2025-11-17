@@ -1,0 +1,128 @@
+<%- include('partials/header', { title: product.name, siteSettings }) %>
+<div class="container my-5">
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <% if (product.image) { %>
+        <img src="<%= product.image %>" class="img-fluid rounded" alt="<%= product.name %>">
+      <% } %>
+    </div>
+    <div class="col-md-6">
+      <h1 class="h2 mb-3"><%= product.name %></h1>
+      <% if (product.shortDescription) { %>
+        <p class="lead"><%= product.shortDescription %></p>
+      <% } %>
+      <% if (product.description) { %>
+        <div class="mb-4"><%- product.description %></div>
+      <% } %>
+      
+      <% if (product.sizes && product.sizes.length > 0) { %>
+        <div class="mb-4">
+          <h3 class="h5 mb-3">Select Pool Size</h3>
+          <div id="sizeTags" class="d-flex flex-wrap gap-2">
+            <% product.sizes.forEach(size => { %>
+              <button type="button" class="btn btn-outline-primary size-tag" data-size="<%= size %>" onclick="toggleSize(this, '<%= size %>')">
+                <%= size %>
+              </button>
+            <% }) %>
+          </div>
+          <input type="hidden" id="selectedSizes" name="selectedSizes" value="">
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="h4 mb-0">Request a Quote</h2>
+        </div>
+        <div class="card-body">
+          <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+            <div class="alert alert-success"><%= success[0] %></div>
+          <% } %>
+          <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+            <div class="alert alert-danger"><%= error[0] %></div>
+          <% } %>
+
+          <form action="/products/quote" method="POST">
+            <input type="hidden" name="productId" value="<%= product._id %>">
+            <input type="hidden" name="productSlug" value="<%= product.slug %>">
+            <input type="hidden" id="selectedSizesInput" name="selectedSizes" value="">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Name *</label>
+                <input type="text" name="name" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">City *</label>
+                <input type="text" name="city" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email *</label>
+                <input type="email" name="email" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone *</label>
+                <input type="tel" name="phone" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Service Type *</label>
+                <select name="serviceType" class="form-select" required>
+                  <option value="">Select a service type...</option>
+                  <option value="New Pool Consult">New Pool Consult</option>
+                  <option value="Pool Replacement">Pool Replacement</option>
+                  <option value="Pool Removal">Pool Removal</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Message</label>
+                <textarea name="message" rows="5" class="form-control" placeholder="Tell us about your project..."></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary btn-lg">Submit Quote Request</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedSizes = [];
+
+  function toggleSize(button, size) {
+    if (button.classList.contains('active')) {
+      button.classList.remove('active');
+      selectedSizes = selectedSizes.filter(s => s !== size);
+    } else {
+      button.classList.add('active');
+      selectedSizes.push(size);
+    }
+    updateSelectedSizesInput();
+  }
+
+  function updateSelectedSizesInput() {
+    const input = document.getElementById('selectedSizesInput');
+    if (input) {
+      input.value = JSON.stringify(selectedSizes);
+    }
+  }
+
+  // Initialize on page load
+  updateSelectedSizesInput();
+</script>
+
+<style>
+  .size-tag.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+  }
+</style>
+
+<%- include('partials/footer', { siteSettings }) %>
+
