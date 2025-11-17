@@ -9,9 +9,6 @@ const flash = require('connect-flash')
 const connectDB = require('./config/db')
 const SiteSettings = require('./models/SiteSettings')
 
-// Connect to Mongo
-connectDB()
-
 const app = express()
 
 // View engine
@@ -96,7 +93,21 @@ app.use((req, res) => {
     .render('error', { title: 'Not Found', error: 'Page not found' })
 })
 
+// Start server after database connection
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => {
-  console.log(`Goodfella Pools running at http://localhost:${PORT}`)
-})
+
+async function startServer() {
+  try {
+    // Connect to Mongo
+    await connectDB()
+    
+    app.listen(PORT, () => {
+      console.log(`Goodfella Pools running at http://localhost:${PORT}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+startServer()
