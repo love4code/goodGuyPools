@@ -367,6 +367,39 @@ The admin dashboard provides:
 - Set up social media links (Facebook, Instagram, TikTok, YouTube)
 - Configure SEO settings (default title, meta description, OG image)
 
+**Home Page Hero Section:**
+
+The home page features a customizable hero section that can be enabled or
+disabled.
+
+**Setting Up a Hero Section:**
+
+1. Go to Admin → Settings
+2. Scroll to "Home Page Hero Section"
+3. Check "Enable Hero Section" to activate
+4. Configure the following:
+   - **Hero Image**: Select from media library or enter image path
+   - **Hero Title**: Main heading text (e.g., "Welcome to Good Guy Pools")
+   - **Hero Subtitle**: Subheading or tagline (e.g., "Custom Swimming Pools &
+     Outdoor Living")
+   - **Button Text**: Call-to-action button text (e.g., "Request a Free Quote")
+   - **Button Link**: URL path for the button (e.g., `/contact`, `/products`)
+
+**Hero Section Features:**
+
+- Full-width background image with dark gradient overlay
+- Centered text with shadow for readability
+- Responsive design (500px minimum height)
+- Professional appearance with customizable content
+- Media library integration for easy image selection
+
+**Default Home Page:**
+
+- When hero section is disabled, the default home page layout is shown
+- Default layout includes a simple centered section with company name and
+  tagline
+- All other sections (Services, Projects, Contact form) remain unchanged
+
 **Theme Customization:**
 
 The application includes a comprehensive theme customization system that allows

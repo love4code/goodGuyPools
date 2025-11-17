@@ -24,6 +24,14 @@ exports.updateSettings = async (req, res) => {
   settings.seo.defaultMetaDescription = body.defaultMetaDescription || '';
   settings.seo.defaultOgImage = body.defaultOgImage || '';
 
+  // Hero section settings
+  settings.hero.enabled = body.heroEnabled === 'on';
+  settings.hero.image = body.heroImage || '';
+  settings.hero.title = body.heroTitle || '';
+  settings.hero.subtitle = body.heroSubtitle || '';
+  settings.hero.buttonText = body.heroButtonText || '';
+  settings.hero.buttonLink = body.heroButtonLink || '';
+
   // Theme settings
   settings.theme.preset = body.themePreset || 'default';
   settings.theme.header.backgroundColor =

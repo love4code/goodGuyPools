@@ -18,6 +18,14 @@ const siteSettingsSchema = new mongoose.Schema({
     defaultMetaDescription: { type: String, default: '' },
     defaultOgImage: { type: String, default: '' },
   },
+  hero: {
+    image: { type: String, default: '' }, // Hero image path
+    title: { type: String, default: '' }, // Hero title
+    subtitle: { type: String, default: '' }, // Hero subtitle
+    buttonText: { type: String, default: '' }, // Hero button text
+    buttonLink: { type: String, default: '' }, // Hero button link
+    enabled: { type: Boolean, default: false }, // Enable/disable hero section
+  },
   theme: {
     preset: {
       type: String,

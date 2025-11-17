@@ -54,6 +54,59 @@
     <input type="text" name="defaultOgImage" class="form-control" value="<%= settings.seo.defaultOgImage %>">
   </div>
 
+  <!-- Hero Section Settings -->
+  <div class="col-12">
+    <hr class="my-4">
+    <h2 class="h5 mb-3">Home Page Hero Section</h2>
+    <p class="text-muted small">Customize the hero section on your home page. If disabled, the default home page layout will be shown.</p>
+  </div>
+
+  <div class="col-md-12">
+    <div class="form-check mb-3">
+      <input type="checkbox" name="heroEnabled" id="heroEnabled" class="form-check-input" <%= settings.hero && settings.hero.enabled ? 'checked' : '' %>>
+      <label class="form-check-label" for="heroEnabled">
+        Enable Hero Section
+      </label>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <label class="form-label">Hero Image</label>
+    <div class="input-group mb-2">
+      <input type="text" name="heroImage" id="heroImage" class="form-control" placeholder="/api/images/..." value="<%= settings.hero && settings.hero.image ? settings.hero.image : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('heroImage')">Select from Media Library</button>
+    </div>
+    <small class="text-muted">Select an image from your media library or enter an image path</small>
+    <% if (settings.hero && settings.hero.image) { %>
+      <div class="mt-2">
+        <img src="<%= settings.hero.image %>" alt="Hero preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">
+      </div>
+    <% } %>
+  </div>
+
+  <div class="col-md-12">
+    <label class="form-label">Hero Title</label>
+    <input type="text" name="heroTitle" class="form-control" placeholder="e.g., Welcome to Good Guy Pools" value="<%= settings.hero && settings.hero.title ? settings.hero.title : '' %>">
+    <small class="text-muted">Main heading for the hero section</small>
+  </div>
+
+  <div class="col-md-12">
+    <label class="form-label">Hero Subtitle</label>
+    <input type="text" name="heroSubtitle" class="form-control" placeholder="e.g., Custom Swimming Pools & Outdoor Living" value="<%= settings.hero && settings.hero.subtitle ? settings.hero.subtitle : '' %>">
+    <small class="text-muted">Subheading or tagline for the hero section</small>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">Button Text</label>
+    <input type="text" name="heroButtonText" class="form-control" placeholder="e.g., Request a Free Quote" value="<%= settings.hero && settings.hero.buttonText ? settings.hero.buttonText : '' %>">
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">Button Link</label>
+    <input type="text" name="heroButtonLink" class="form-control" placeholder="e.g., /contact" value="<%= settings.hero && settings.hero.buttonLink ? settings.hero.buttonLink : '' %>">
+    <small class="text-muted">URL path (e.g., /contact, /products, etc.)</small>
+  </div>
+
   <!-- Theme Customization Section -->
   <div class="col-12">
     <hr class="my-4">
@@ -291,6 +344,69 @@
       document.getElementById('footerBorderColor').value = this.value;
     }
   });
+</script>
+
+<!-- Media Modal for Hero Image Selection -->
+<div class="modal fade" id="mediaModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Select Media</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mediaGrid" class="row g-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let targetInput = null;
+  async function openMediaModal(targetId) {
+    targetInput = document.getElementById(targetId);
+    const grid = document.getElementById('mediaGrid');
+    grid.innerHTML = '<div class="text-center py-5">Loading...</div>';
+    try {
+      const res = await fetch('/admin/media/api/list');
+      const items = await res.json();
+      grid.innerHTML = items.map(m => `
+        <div class="col-md-3">
+          <div class="card h-100" onclick="selectMedia('${m.filePath}', '${targetId}')" style="cursor: pointer;">
+            <img src="${m.filePath}" class="card-img-top" style="object-fit:cover;height:180px">
+            <div class="card-body small">
+              <div class="fw-semibold">${m.title || m.originalFilename}</div>
+              <div class="text-muted">${m.filePath}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      new bootstrap.Modal(document.getElementById('mediaModal')).show();
+    } catch (error) {
+      grid.innerHTML = '<div class="text-center py-5 text-danger">Error loading media. Please try again.</div>';
+    }
+  }
+  
+  function selectMedia(path, targetId) {
+    const input = document.getElementById(targetId);
+    if (input) {
+      input.value = path;
+      // Update preview if it's the hero image
+      if (targetId === 'heroImage') {
+        const preview = input.parentElement.nextElementSibling;
+        if (preview && preview.classList.contains('mt-2')) {
+          preview.innerHTML = `<img src="${path}" alt="Hero preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">`;
+        } else {
+          // Create preview if it doesn't exist
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'mt-2';
+          previewDiv.innerHTML = `<img src="${path}" alt="Hero preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">`;
+          input.parentElement.parentElement.appendChild(previewDiv);
+        }
+      }
+    }
+    bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
+  }
 </script>
 <%- include('../partials/footer', { settings }) %>
 

@@ -1,12 +1,38 @@
 <%- include('partials/header', { title: 'Home', siteSettings }) %>
 
-<section class="mb-5">
-  <div class="p-5 bg-light rounded-3 text-center">
-    <h1 class="display-5 fw-bold text-primary">Good Guy Pools</h1>
-    <p class="lead mb-4">Custom Swimming Pools & Outdoor Living</p>
-    <a class="btn btn-primary btn-lg" href="/contact">Request a Free Quote</a>
-  </div>
-</section>
+<% if (siteSettings && siteSettings.hero && siteSettings.hero.enabled && siteSettings.hero.image) { %>
+  <!-- Hero Section with Image -->
+  <section class="mb-5 position-relative" style="min-height: 500px; overflow: hidden;">
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-image: url('<%= siteSettings.hero.image %>'); background-size: cover; background-position: center; z-index: 0;"></div>
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)); z-index: 1;"></div>
+    <div class="position-relative" style="z-index: 2; min-height: 500px; display: flex; align-items: center;">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center text-white" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">
+            <% if (siteSettings.hero.title) { %>
+              <h1 class="display-4 fw-bold mb-4"><%= siteSettings.hero.title %></h1>
+            <% } %>
+            <% if (siteSettings.hero.subtitle) { %>
+              <p class="lead mb-4 fs-4"><%= siteSettings.hero.subtitle %></p>
+            <% } %>
+            <% if (siteSettings.hero.buttonText && siteSettings.hero.buttonLink) { %>
+              <a class="btn btn-primary btn-lg shadow" href="<%= siteSettings.hero.buttonLink %>"><%= siteSettings.hero.buttonText %></a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+<% } else { %>
+  <!-- Default Home Page Section (when hero is disabled) -->
+  <section class="mb-5">
+    <div class="p-5 bg-light rounded-3 text-center">
+      <h1 class="display-5 fw-bold text-primary">Good Guy Pools</h1>
+      <p class="lead mb-4">Custom Swimming Pools & Outdoor Living</p>
+      <a class="btn btn-primary btn-lg" href="/contact">Request a Free Quote</a>
+    </div>
+  </section>
+<% } %>
 
 <section class="mb-5">
   <h2 class="h3 mb-4">Our Services</h2>
