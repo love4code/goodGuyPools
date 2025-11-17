@@ -13,9 +13,13 @@
     <label class="form-label">Short Description *</label>
     <input type="text" name="shortDescription" class="form-control" required value="<%= project ? project.shortDescription : '' %>">
   </div>
-  <div class="col-md-12">
-    <label class="form-label">Description (HTML allowed)</label>
-    <textarea name="description" rows="6" class="form-control"><%= project ? project.description : '' %></textarea>
+  <div class="col-md-12" style="position: relative; z-index: 1; margin-bottom: 20px;">
+    <label class="form-label">Description (Rich Text Editor)</label>
+    <div id="description-editor-wrapper" style="position: relative; z-index: 1; margin-bottom: 10px;">
+      <div id="description-editor"></div>
+    </div>
+    <textarea id="description" name="description" rows="10" class="form-control" style="display: none;"><%= project ? project.description : '' %></textarea>
+    <small class="text-muted">Use the toolbar above to format text, add links, lists, and more. HTML is supported.</small>
   </div>
   <div class="col-md-4">
     <label class="form-label">Project Type *</label>
@@ -176,6 +180,251 @@
   // Initial preview load
   updateGalleryPreview();
 </script>
+
+<!-- Quill Rich Text Editor (Bootstrap 5 Compatible) -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+  // Add Bootstrap button icons to toolbar BEFORE initializing Quill
+  const icons = Quill.import('ui/icons');
+  icons['bootstrap-button'] = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect><text x="5" y="11" font-size="7" fill="currentColor">Btn</text></svg>';
+  icons['bootstrap-card'] = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect><text x="4" y="11" font-size="7" fill="currentColor">Card</text></svg>';
+  icons['bootstrap-badge'] = '<svg viewBox="0 0 18 18"><circle class="ql-stroke" cx="9" cy="9" r="6"></circle><text x="5" y="12" font-size="7" fill="currentColor">Badge</text></svg>';
+  icons['bootstrap-alert'] = '<svg viewBox="0 0 18 18"><polygon class="ql-stroke" points="9 2 16 16 2 16"></polygon><text x="7.5" y="13" font-size="10" fill="currentColor">!</text></svg>';
+
+  // Initialize Quill editor
+  const quill = new Quill('#description-editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: {
+        container: [
+          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'align': [] }],
+          ['link', 'image', 'blockquote', 'code-block'],
+          ['clean'],
+          ['bootstrap-button', 'bootstrap-card', 'bootstrap-badge', 'bootstrap-alert']
+        ],
+        handlers: {
+          'bootstrap-button': function() {
+            const quill = this.quill;
+            const range = quill.getSelection(true);
+            const index = range ? range.index : quill.getLength() - 1;
+            const buttonHtml = '<a href="#" class="btn btn-primary">Button Text</a>';
+            quill.clipboard.dangerouslyPasteHTML(index, buttonHtml);
+            quill.setSelection(index + 1);
+          },
+          'bootstrap-card': function() {
+            const quill = this.quill;
+            const range = quill.getSelection(true);
+            const index = range ? range.index : quill.getLength() - 1;
+            const cardHtml = '<div class="card mb-3"><div class="card-body"><h5 class="card-title">Card Title</h5><p class="card-text">Card content goes here.</p></div></div>';
+            quill.clipboard.dangerouslyPasteHTML(index, cardHtml);
+            quill.setSelection(index + 1);
+          },
+          'bootstrap-badge': function() {
+            const quill = this.quill;
+            const range = quill.getSelection(true);
+            const index = range ? range.index : quill.getLength() - 1;
+            const badgeHtml = '<span class="badge bg-primary">Badge</span>';
+            quill.clipboard.dangerouslyPasteHTML(index, badgeHtml);
+            quill.setSelection(index + 1);
+          },
+          'bootstrap-alert': function() {
+            const quill = this.quill;
+            const range = quill.getSelection(true);
+            const index = range ? range.index : quill.getLength() - 1;
+            const alertHtml = '<div class="alert alert-primary" role="alert">Alert message goes here.</div>';
+            quill.clipboard.dangerouslyPasteHTML(index, alertHtml);
+            quill.setSelection(index + 1);
+          }
+        }
+      }
+    }
+  });
+
+
+  // Sync Quill content to textarea before form submission
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function() {
+    const textarea = document.getElementById('description');
+    textarea.value = quill.root.innerHTML;
+  });
+
+  // Load existing content into Quill if editing
+  const existingContent = document.getElementById('description').value;
+  if (existingContent) {
+    quill.root.innerHTML = existingContent;
+  }
+
+  // Also sync on text changes to keep textarea updated
+  quill.on('text-change', function() {
+    const textarea = document.getElementById('description');
+    textarea.value = quill.root.innerHTML;
+  });
+</script>
+<style>
+  /* Rich text editor wrapper - contains the editor */
+  #description-editor-wrapper {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+    clear: both;
+  }
+  
+  /* Rich text editor container */
+  #description-editor {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Quill editor styles - prevent overflow issues */
+  #description-editor-wrapper .ql-container {
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+  }
+  
+  #description-editor-wrapper .ql-toolbar {
+    position: relative;
+    z-index: 2;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px 4px 0 0;
+  }
+  
+  /* Bootstrap 5 styles in editor */
+  #description-editor-wrapper .ql-editor {
+    min-height: 300px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
+  
+  /* Ensure Quill dropdowns don't cover form elements */
+  #description-editor-wrapper .ql-snow .ql-picker {
+    z-index: 3;
+    position: relative;
+  }
+  
+  #description-editor-wrapper .ql-snow .ql-picker-options {
+    z-index: 1000;
+    position: absolute;
+  }
+  
+  /* Ensure form elements below editor are accessible and not covered */
+  form .row > div {
+    position: relative;
+  }
+  
+  /* Ensure all form columns have proper z-index */
+  form .row .col-md-4,
+  form .row .col-md-6,
+  form .row .col-md-12 {
+    position: relative;
+    z-index: 0;
+  }
+  
+  /* Editor container should have higher z-index but contained */
+  #description-editor-wrapper {
+    isolation: isolate;
+  }
+  
+  /* Ensure elements after editor are not covered */
+  .col-md-12:has(#description-editor-wrapper) {
+    margin-bottom: 30px;
+  }
+  
+  /* Force clear after editor section */
+  .col-md-12:has(#description-editor-wrapper)::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+  
+  /* Ensure Bootstrap components display correctly */
+  .ql-editor .btn {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    margin: 0.25rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+  }
+  .ql-editor .btn-primary {
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  .ql-editor .btn-primary:hover {
+    color: #fff;
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+  .ql-editor .badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+  }
+  .ql-editor .bg-primary {
+    background-color: #0d6efd !important;
+  }
+  .ql-editor .alert {
+    position: relative;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+  }
+  .ql-editor .alert-primary {
+    color: #084298;
+    background-color: #cfe2ff;
+    border-color: #b6d4fe;
+  }
+  .ql-editor .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.375rem;
+    margin: 1rem 0;
+  }
+  .ql-editor .card-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+  }
+  .ql-editor .card-title {
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+  .ql-editor .card-text {
+    margin-bottom: 0;
+  }
+</style>
 <%- include('../partials/footer', { settings }) %>
 
 

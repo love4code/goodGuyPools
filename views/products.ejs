@@ -11,7 +11,9 @@
             <% } %>
             <div class="card-body">
               <h3 class="h5 card-title"><%= p.name %></h3>
-              <p class="card-text"><%= p.shortDescription || p.description %></p>
+              <% if (p.shortDescription) { %>
+                <p class="card-text"><%= p.shortDescription %></p>
+              <% } %>
               <% if (p.sizes && p.sizes.length > 0) { %>
                 <div class="mb-2">
                   <small class="text-muted">Available Sizes: </small>

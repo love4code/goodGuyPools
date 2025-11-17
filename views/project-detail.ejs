@@ -6,7 +6,12 @@
     <% } %>
     <h1 class="mb-1"><%= project.title %></h1>
     <div class="text-muted mb-3"><%= project.location || '' %> · <%= project.projectType %> · <span class="badge bg-secondary"><%= project.status %></span></div>
-    <div class="mb-4"><%- project.description %></div>
+    <% if (project.shortDescription) { %>
+      <p class="lead mb-3"><%= project.shortDescription %></p>
+    <% } %>
+    <% if (project.description) { %>
+      <div class="mb-4"><%- project.description %></div>
+    <% } %>
     <% if (project.gallery && project.gallery.length) { %>
       <div class="row g-3">
         <% project.gallery.forEach(img => { %>

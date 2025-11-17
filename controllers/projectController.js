@@ -45,6 +45,7 @@ exports.create = async (req, res) => {
             originalFilename: file.originalname,
             title: req.body.title || '',
             altText: '',
+            sizes: file.sizes || {},
           });
           uploadedGalleryPaths.push(file.path);
         }
@@ -108,6 +109,7 @@ exports.update = async (req, res) => {
             originalFilename: file.originalname,
             title: req.body.title || '',
             altText: '',
+            sizes: file.sizes || {},
           });
           uploadedGalleryPaths.push(file.path);
         }

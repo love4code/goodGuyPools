@@ -30,6 +30,7 @@ exports.create = async (req, res) => {
           title: req.body.name || '',
           altText: '',
           tags: ['product', 'featured'],
+          sizes: featuredFile.sizes || {},
         });
         featuredImagePath = featuredFile.path;
       }
@@ -52,6 +53,7 @@ exports.create = async (req, res) => {
             title: req.body.name || '',
             altText: '',
             tags: ['product'],
+            sizes: file.sizes || {},
           });
           uploadedGalleryPaths.push(file.path);
         }
@@ -191,6 +193,7 @@ exports.update = async (req, res) => {
           title: req.body.name || '',
           altText: '',
           tags: ['product', 'featured'],
+          sizes: featuredFile.sizes || {},
         });
         featuredImagePath = featuredFile.path;
       }
@@ -213,6 +216,7 @@ exports.update = async (req, res) => {
             title: req.body.name || '',
             altText: '',
             tags: ['product'],
+            sizes: file.sizes || {},
           });
           uploadedGalleryPaths.push(file.path);
         }

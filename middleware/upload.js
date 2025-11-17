@@ -20,6 +20,87 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB - GridFS can handle large files
 });
 
+// Helper function to generate multiple image sizes
+async function generateImageSizes (buffer, baseName, ext, isGif) {
+  const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const outExt = isGif ? '.gif' : '.webp';
+  const sizes = {};
+
+  if (isGif) {
+    // For GIFs, only store original (don't resize to preserve animation)
+    const fileId = await uploadToGridFS(
+      buffer,
+      `${baseName}-${unique}${outExt}`,
+      {
+        originalName: `${baseName}${ext}`,
+        mimetype: 'image/gif',
+        uploadedAt: new Date(),
+        size: 'original',
+      },
+    );
+    sizes.thumbnail = { gridfsId: fileId, filePath: `/api/images/${fileId}` };
+    sizes.medium = { gridfsId: fileId, filePath: `/api/images/${fileId}` };
+    sizes.large = { gridfsId: fileId, filePath: `/api/images/${fileId}` };
+  } else {
+    // Generate thumbnail (300x300)
+    const thumbnailBuffer = await sharp(buffer)
+      .resize(300, 300, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
+    const thumbnailId = await uploadToGridFS(
+      thumbnailBuffer,
+      `${baseName}-${unique}-thumb${outExt}`,
+      {
+        originalName: `${baseName}${ext}`,
+        mimetype: 'image/webp',
+        uploadedAt: new Date(),
+        size: 'thumbnail',
+      },
+    );
+    sizes.thumbnail = {
+      gridfsId: thumbnailId,
+      filePath: `/api/images/${thumbnailId}`,
+    };
+
+    // Generate medium (800x800)
+    const mediumBuffer = await sharp(buffer)
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85, effort: 5 })
+      .toBuffer();
+    const mediumId = await uploadToGridFS(
+      mediumBuffer,
+      `${baseName}-${unique}-medium${outExt}`,
+      {
+        originalName: `${baseName}${ext}`,
+        mimetype: 'image/webp',
+        uploadedAt: new Date(),
+        size: 'medium',
+      },
+    );
+    sizes.medium = { gridfsId: mediumId, filePath: `/api/images/${mediumId}` };
+
+    // Generate large (1920x1920)
+    const largeBuffer = await sharp(buffer)
+      .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+      .rotate()
+      .webp({ quality: 85, effort: 6 })
+      .toBuffer();
+    const largeId = await uploadToGridFS(
+      largeBuffer,
+      `${baseName}-${unique}-large${outExt}`,
+      {
+        originalName: `${baseName}${ext}`,
+        mimetype: 'image/webp',
+        uploadedAt: new Date(),
+        size: 'large',
+      },
+    );
+    sizes.large = { gridfsId: largeId, filePath: `/api/images/${largeId}` };
+  }
+
+  return sizes;
+}
+
 // Process image: resize max 1920x1920, convert to webp (except GIF), compress, upload to GridFS
 async function processImage (req, res, next) {
   if (!req.file) return next();
@@ -29,38 +110,17 @@ async function processImage (req, res, next) {
       .basename(req.file.originalname, ext)
       .replace(/\s+/g, '-')
       .toLowerCase();
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const outExt = ext === '.gif' ? '.gif' : '.webp';
-    const outName = `${base}-${unique}${outExt}`;
-    let processedBuffer = req.file.buffer;
-    let mimeType = req.file.mimetype;
+    const isGif = ext === '.gif';
 
-    if (ext === '.gif') {
-      // Keep GIFs as-is to avoid breaking animations
-      mimeType = 'image/gif';
-    } else {
-      // Process with Sharp: resize, rotate, convert to WebP
-      processedBuffer = await sharp(req.file.buffer)
-        .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-        .rotate()
-        .webp({ quality: 85, effort: 6 })
-        .toBuffer();
-      mimeType = 'image/webp';
-    }
+    // Generate all sizes
+    const sizes = await generateImageSizes(req.file.buffer, base, ext, isGif);
 
-    // Upload to GridFS
-    const fileId = await uploadToGridFS(processedBuffer, outName, {
-      originalName: req.file.originalname,
-      mimetype: mimeType,
-      uploadedAt: new Date(),
-    });
-
-    // Store GridFS file ID and metadata in req.file
-    req.file.gridfsId = fileId;
-    req.file.filename = outName;
-    req.file.path = `/api/images/${fileId}`; // Route to serve from GridFS
-    req.file.size = processedBuffer.length;
-    req.file.mimetype = mimeType;
+    // Store GridFS file IDs and metadata in req.file
+    req.file.gridfsId = sizes.large.gridfsId; // Use large as primary
+    req.file.filename = `${base}-large.webp`;
+    req.file.path = sizes.large.filePath; // Route to serve from GridFS
+    req.file.sizes = sizes; // Store all size references
+    req.file.mimetype = isGif ? 'image/gif' : 'image/webp';
 
     next();
   } catch (err) {
@@ -94,35 +154,17 @@ async function processImages (req, res, next) {
         .basename(file.originalname, ext)
         .replace(/\s+/g, '-')
         .toLowerCase();
-      const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const outExt = ext === '.gif' ? '.gif' : '.webp';
-      const outName = `${base}-${unique}${outExt}`;
-      let processedBuffer = file.buffer;
-      let mimeType = file.mimetype;
+      const isGif = ext === '.gif';
 
-      if (ext === '.gif') {
-        mimeType = 'image/gif';
-      } else {
-        processedBuffer = await sharp(file.buffer)
-          .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-          .rotate()
-          .webp({ quality: 85, effort: 6 })
-          .toBuffer();
-        mimeType = 'image/webp';
-      }
+      // Generate all sizes
+      const sizes = await generateImageSizes(file.buffer, base, ext, isGif);
 
-      // Upload to GridFS
-      const fileId = await uploadToGridFS(processedBuffer, outName, {
-        originalName: file.originalname,
-        mimetype: mimeType,
-        uploadedAt: new Date(),
-      });
-
-      file.gridfsId = fileId;
-      file.filename = outName;
-      file.path = `/api/images/${fileId}`;
-      file.size = processedBuffer.length;
-      file.mimetype = mimeType;
+      // Store GridFS file IDs and metadata in file object
+      file.gridfsId = sizes.large.gridfsId; // Use large as primary
+      file.filename = `${base}-large.webp`;
+      file.path = sizes.large.filePath;
+      file.sizes = sizes; // Store all size references
+      file.mimetype = isGif ? 'image/gif' : 'image/webp';
     }
     next();
   } catch (err) {
