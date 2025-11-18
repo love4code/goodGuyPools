@@ -18,6 +18,8 @@ const siteSettingsSchema = new mongoose.Schema({
     defaultMetaDescription: { type: String, default: '' },
     defaultOgImage: { type: String, default: '' },
   },
+  favicon: { type: String, default: '' }, // Favicon path
+  logo: { type: String, default: '' }, // Logo path
   hero: {
     image: { type: String, default: '' }, // Hero image path
     title: { type: String, default: '' }, // Hero title

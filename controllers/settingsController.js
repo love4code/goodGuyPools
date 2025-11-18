@@ -1,9 +1,15 @@
 const SiteSettings = require('../models/SiteSettings');
+const Media = require('../models/Media');
 
 exports.getSettings = async (req, res) => {
   let settings = await SiteSettings.findOne();
   if (!settings) settings = await SiteSettings.create({});
-  res.render('admin/settings', { title: 'Site Settings', settings });
+  // Also pass as siteSettings for consistency with header partial
+  res.render('admin/settings', {
+    title: 'Site Settings',
+    settings,
+    siteSettings: settings,
+  });
 };
 
 exports.updateSettings = async (req, res) => {
@@ -23,6 +29,55 @@ exports.updateSettings = async (req, res) => {
   settings.seo.defaultTitle = body.defaultTitle || settings.companyName;
   settings.seo.defaultMetaDescription = body.defaultMetaDescription || '';
   settings.seo.defaultOgImage = body.defaultOgImage || '';
+
+  // Favicon
+  if (
+    req.files &&
+    req.files.faviconUpload &&
+    req.files.faviconUpload[0] &&
+    req.files.faviconUpload[0].path
+  ) {
+    const faviconFile = req.files.faviconUpload[0];
+    // Save to Media library
+    await Media.create({
+      gridfsId: faviconFile.gridfsId,
+      filePath: faviconFile.path,
+      originalFilename: faviconFile.originalname,
+      title: 'Favicon',
+      altText: 'Site Favicon',
+      tags: ['favicon'],
+      sizes: faviconFile.sizes || {},
+    });
+    settings.favicon = faviconFile.path;
+  } else if (body.favicon) {
+    settings.favicon = body.favicon;
+  }
+
+  // Logo
+  if (
+    req.files &&
+    req.files.logoUpload &&
+    req.files.logoUpload[0] &&
+    req.files.logoUpload[0].path
+  ) {
+    const logoFile = req.files.logoUpload[0];
+    // Save to Media library
+    await Media.create({
+      gridfsId: logoFile.gridfsId,
+      filePath: logoFile.path,
+      originalFilename: logoFile.originalname,
+      title: 'Logo',
+      altText: 'Site Logo',
+      tags: ['logo'],
+      sizes: logoFile.sizes || {},
+    });
+    settings.logo = logoFile.path;
+  } else if (body.logo && body.logo.trim() !== '') {
+    settings.logo = body.logo.trim();
+  } else if (!body.logo || body.logo.trim() === '') {
+    // Keep existing logo if not provided
+    // Don't clear it unless explicitly cleared
+  }
 
   // Hero section settings
   settings.hero.enabled = body.heroEnabled === 'on';

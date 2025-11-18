@@ -102,6 +102,7 @@ async function generateImageSizes (buffer, baseName, ext, isGif) {
 }
 
 // Process image: resize max 1920x1920, convert to webp (except GIF), compress, upload to GridFS
+// Special handling for favicon uploads: resize to 32x32px
 async function processImage (req, res, next) {
   if (!req.file) return next();
   try {
@@ -111,8 +112,62 @@ async function processImage (req, res, next) {
       .replace(/\s+/g, '-')
       .toLowerCase();
     const isGif = ext === '.gif';
+    const isFavicon = req.file.fieldname === 'faviconUpload';
 
-    // Generate all sizes
+    // Special handling for favicon: resize to 32x32px
+    if (isFavicon) {
+      const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      let faviconBuffer;
+      let faviconMimetype;
+      let faviconExt;
+
+      if (isGif) {
+        // For GIF favicons, resize to 32x32 while preserving format
+        faviconBuffer = await sharp(req.file.buffer)
+          .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
+          .gif()
+          .toBuffer();
+        faviconMimetype = 'image/gif';
+        faviconExt = '.gif';
+      } else {
+        // For other formats, convert to PNG for better favicon support
+        faviconBuffer = await sharp(req.file.buffer)
+          .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
+          .png()
+          .toBuffer();
+        faviconMimetype = 'image/png';
+        faviconExt = '.png';
+      }
+
+      const faviconId = await uploadToGridFS(
+        faviconBuffer,
+        `favicon-${unique}${faviconExt}`,
+        {
+          originalName: req.file.originalname,
+          mimetype: faviconMimetype,
+          uploadedAt: new Date(),
+          size: 'favicon',
+        },
+      );
+
+      // Store GridFS file ID and metadata in req.file
+      req.file.gridfsId = faviconId;
+      req.file.filename = `favicon-${unique}${faviconExt}`;
+      req.file.path = `/api/images/${faviconId}`;
+      req.file.sizes = {
+        thumbnail: {
+          gridfsId: faviconId,
+          filePath: `/api/images/${faviconId}`,
+        },
+        medium: { gridfsId: faviconId, filePath: `/api/images/${faviconId}` },
+        large: { gridfsId: faviconId, filePath: `/api/images/${faviconId}` },
+      };
+      req.file.mimetype = faviconMimetype;
+
+      return next();
+    }
+
+    // Generate all sizes for regular images
     const sizes = await generateImageSizes(req.file.buffer, base, ext, isGif);
 
     // Store GridFS file IDs and metadata in req.file
@@ -155,8 +210,61 @@ async function processImages (req, res, next) {
         .replace(/\s+/g, '-')
         .toLowerCase();
       const isGif = ext === '.gif';
+      const isFavicon = file.fieldname === 'faviconUpload';
 
-      // Generate all sizes
+      // Special handling for favicon: resize to 32x32px
+      if (isFavicon) {
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        let faviconBuffer;
+        let faviconMimetype;
+        let faviconExt;
+
+        if (isGif) {
+          // For GIF favicons, resize to 32x32 while preserving format
+          faviconBuffer = await sharp(file.buffer)
+            .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
+            .gif()
+            .toBuffer();
+          faviconMimetype = 'image/gif';
+          faviconExt = '.gif';
+        } else {
+          // For other formats, convert to PNG for better favicon support
+          faviconBuffer = await sharp(file.buffer)
+            .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
+            .png()
+            .toBuffer();
+          faviconMimetype = 'image/png';
+          faviconExt = '.png';
+        }
+
+        const faviconId = await uploadToGridFS(
+          faviconBuffer,
+          `favicon-${unique}${faviconExt}`,
+          {
+            originalName: file.originalname,
+            mimetype: faviconMimetype,
+            uploadedAt: new Date(),
+            size: 'favicon',
+          },
+        );
+
+        // Store GridFS file ID and metadata in file object
+        file.gridfsId = faviconId;
+        file.filename = `favicon-${unique}${faviconExt}`;
+        file.path = `/api/images/${faviconId}`;
+        file.sizes = {
+          thumbnail: {
+            gridfsId: faviconId,
+            filePath: `/api/images/${faviconId}`,
+          },
+          medium: { gridfsId: faviconId, filePath: `/api/images/${faviconId}` },
+          large: { gridfsId: faviconId, filePath: `/api/images/${faviconId}` },
+        };
+        file.mimetype = faviconMimetype;
+        continue; // Skip to next file
+      }
+
+      // Generate all sizes for regular images (including logos)
       const sizes = await generateImageSizes(file.buffer, base, ext, isGif);
 
       // Store GridFS file IDs and metadata in file object

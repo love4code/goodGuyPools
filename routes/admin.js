@@ -98,7 +98,16 @@ router.get('/media/api/list', requireAuth, mediaController.apiList);
 
 // Settings
 router.get('/settings', requireAuth, settingsController.getSettings);
-router.post('/settings', requireAuth, settingsController.updateSettings);
+router.post(
+  '/settings',
+  requireAuth,
+  upload.fields([
+    { name: 'faviconUpload', maxCount: 1 },
+    { name: 'logoUpload', maxCount: 1 },
+  ]),
+  require('../middleware/upload').processImages,
+  settingsController.updateSettings,
+);
 
 // Services CRUD
 router.get('/services', requireAuth, serviceController.list);

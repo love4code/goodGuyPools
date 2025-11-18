@@ -1,6 +1,6 @@
 <%- include('../partials/header', { title: 'Site Settings', settings }) %>
 <h1 class="h4 mb-3">Site Settings</h1>
-<form action="/admin/settings" method="POST" class="row g-3">
+<form action="/admin/settings" method="POST" enctype="multipart/form-data" class="row g-3">
   <div class="col-md-6">
     <label class="form-label">Company Name</label>
     <input type="text" name="companyName" class="form-control" value="<%= settings.companyName %>">
@@ -48,6 +48,34 @@
   <div class="col-md-6">
     <label class="form-label">Default Meta Description</label>
     <input type="text" name="defaultMetaDescription" class="form-control" value="<%= settings.seo.defaultMetaDescription %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Favicon</label>
+    <div class="input-group mb-2">
+      <input type="text" name="favicon" id="favicon" class="form-control" placeholder="/api/images/..." value="<%= settings.favicon || '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('favicon')">Select from Media Library</button>
+    </div>
+    <input type="file" name="faviconUpload" id="faviconUpload" class="form-control" accept="image/x-icon,image/png,image/jpeg,image/gif">
+    <small class="text-muted">Upload a new favicon (.ico, .png, .jpg, .gif) or select from media library</small>
+    <% if (settings.favicon) { %>
+      <div class="mt-2">
+        <img src="<%= settings.favicon %>" alt="Favicon preview" class="img-thumbnail" style="width: 32px; height: 32px; object-fit: contain;">
+      </div>
+    <% } %>
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Logo</label>
+    <div class="input-group mb-2">
+      <input type="text" name="logo" id="logo" class="form-control" placeholder="/api/images/..." value="<%= settings.logo || '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('logo')">Select from Media Library</button>
+    </div>
+    <input type="file" name="logoUpload" id="logoUpload" class="form-control" accept="image/png,image/jpeg,image/jpg,image/gif,image/svg+xml">
+    <small class="text-muted">Upload a new logo (.png, .jpg, .gif, .svg) or select from media library. Recommended height: 40-60px</small>
+    <% if (settings.logo) { %>
+      <div class="mt-2">
+        <img src="<%= settings.logo %>" alt="Logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">
+      </div>
+    <% } %>
   </div>
   <div class="col-md-12">
     <label class="form-label">Default OG Image (URL)</label>
@@ -402,6 +430,34 @@
           previewDiv.className = 'mt-2';
           previewDiv.innerHTML = `<img src="${path}" alt="Hero preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">`;
           input.parentElement.parentElement.appendChild(previewDiv);
+        }
+      }
+      // Update preview if it's the favicon
+      if (targetId === 'favicon') {
+        const faviconSection = input.parentElement.parentElement;
+        let preview = faviconSection.querySelector('.mt-2');
+        if (preview) {
+          preview.innerHTML = `<img src="${path}" alt="Favicon preview" class="img-thumbnail" style="width: 32px; height: 32px; object-fit: contain;">`;
+        } else {
+          // Create preview if it doesn't exist
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'mt-2';
+          previewDiv.innerHTML = `<img src="${path}" alt="Favicon preview" class="img-thumbnail" style="width: 32px; height: 32px; object-fit: contain;">`;
+          faviconSection.appendChild(previewDiv);
+        }
+      }
+      // Update preview if it's the logo
+      if (targetId === 'logo') {
+        const logoSection = input.parentElement.parentElement;
+        let preview = logoSection.querySelector('.mt-2');
+        if (preview) {
+          preview.innerHTML = `<img src="${path}" alt="Logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">`;
+        } else {
+          // Create preview if it doesn't exist
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'mt-2';
+          previewDiv.innerHTML = `<img src="${path}" alt="Logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">`;
+          logoSection.appendChild(previewDiv);
         }
       }
     }
