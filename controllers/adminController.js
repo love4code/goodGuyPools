@@ -39,7 +39,11 @@ exports.getLogout = (req, res) => {
 exports.getDashboard = async (req, res) => {
   const projectCount = await Project.countDocuments();
   const contactCount = await Contact.countDocuments();
+  const unreadContactCount = await Contact.countDocuments({ isRead: false });
   const productQuoteCount = await ProductQuote.countDocuments();
+  const unreadProductQuoteCount = await ProductQuote.countDocuments({
+    isRead: false,
+  });
   const recentContacts = await Contact.find().sort({ createdAt: -1 }).limit(5);
   const recentProductQuotes = await ProductQuote.find()
     .populate('productId', 'name slug')
@@ -70,7 +74,9 @@ exports.getDashboard = async (req, res) => {
     stats: {
       projectCount,
       contactCount,
+      unreadContactCount,
       productQuoteCount,
+      unreadProductQuoteCount,
       totalViews,
       last30,
       topPages,
