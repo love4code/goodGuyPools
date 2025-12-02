@@ -39,13 +39,15 @@
   <div class="row g-4">
     <% if (services && services.length) { %> <% services.forEach(s => { %>
     <div class="col-md-3">
-      <div class="card h-100">
-        <div class="card-body">
-          <h3 class="h5 d-flex align-items-center gap-2">
-            <% if (s.icon) { %><i class="bi <%= s.icon %>"></i><% } %>
-            <span><%= s.title %></span>
-          </h3>
-          <p><%= s.description %></p>
+      <div class="card h-100 text-center">
+        <div class="card-body d-flex flex-column">
+          <% if (s.icon) { %>
+            <div class="mb-3">
+              <i class="bi <%= s.icon %>" style="font-size: 3rem; color: #0d6efd;"></i>
+            </div>
+          <% } %>
+          <h3 class="h5 mb-3"><%= s.title %></h3>
+          <p class="card-text flex-grow-1"><%= s.description %></p>
         </div>
       </div>
     </div>

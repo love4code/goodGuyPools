@@ -15,6 +15,23 @@ const app = express()
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
+// Redirect to www and force HTTPS
+app.use((req, res, next) => {
+  const host = req.headers.host;
+  const shouldBe = 'www.goodguypools.com';
+
+  if (host !== shouldBe) {
+    return res.redirect(301, `https://${shouldBe}${req.url}`);
+  }
+
+  // optionally also force https if you're terminating SSL at Heroku:
+  if (req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, `https://${host}${req.url}`);
+  }
+
+  next();
+});
+
 // Static
 app.use('/public', express.static(path.join(__dirname, 'public')))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))

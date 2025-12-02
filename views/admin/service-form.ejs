@@ -5,14 +5,18 @@
     <label class="form-label">Title *</label>
     <input type="text" name="title" class="form-control" value="<%= service ? service.title : '' %>" required>
   </div>
-  <div class="col-md-6">
-    <label class="form-label">Icon (Bootstrap Icons class)</label>
-    <div class="input-group">
-      <span class="input-group-text"><i id="iconPreview" class="bi <%= service && service.icon ? service.icon : '' %>"></i></span>
-      <input type="text" name="icon" id="iconInput" class="form-control" placeholder="e.g. bi-hammer" value="<%= service ? service.icon : '' %>">
-      <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#iconModal">Choose</button>
+  <div class="col-md-12">
+    <label class="form-label">Icon *</label>
+    <div class="input-group mb-2">
+      <span class="input-group-text bg-light" style="min-width: 60px; justify-content: center;">
+        <i id="iconPreview" class="bi <%= service && service.icon ? service.icon : 'bi-circle' %>" style="font-size: 1.5rem;"></i>
+      </span>
+      <input type="text" name="icon" id="iconInput" class="form-control" placeholder="Select an icon using the picker below" value="<%= service ? service.icon : '' %>" required>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#iconModal">
+        <i class="bi bi-grid-3x3-gap"></i> Choose Icon
+      </button>
     </div>
-    <div class="form-text">Uses <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>. Example: <code>bi-tools</code>, <code>bi-water</code>, <code>bi-house-gear</code>.</div>
+    <div class="form-text">Click "Choose Icon" to browse and select from Bootstrap Icons. Icon is required for display on the homepage.</div>
   </div>
   <div class="col-md-3">
     <label class="form-label">Order</label>
@@ -30,7 +34,7 @@
 
 <!-- Icon Picker Modal -->
 <div class="modal fade" id="iconModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Choose an Icon</h5>
@@ -38,10 +42,83 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <input type="text" id="iconSearch" class="form-control" placeholder="Search icons (e.g. water, tools, hammer)...">
-          <div class="form-text">Pulls from Bootstrap Icons list. Click an icon to select it.</div>
+          <input type="text" id="iconSearch" class="form-control form-control-lg" placeholder="Search icons (e.g. water, tools, pool, repair, maintenance)...">
+          <div class="form-text mt-1">Browse through Bootstrap Icons. Click an icon to select it.</div>
         </div>
-        <div class="row g-3" id="iconGrid"></div>
+        <div id="popularIcons" class="mb-4 p-3 bg-light rounded">
+          <h6 class="mb-3">Popular Service Icons</h6>
+          <div class="row g-2">
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-tools')" title="Tools">
+                <i class="bi bi-tools" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-wrench')" title="Wrench">
+                <i class="bi bi-wrench" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-water')" title="Water">
+                <i class="bi bi-water" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-droplet')" title="Droplet">
+                <i class="bi bi-droplet" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-hammer')" title="Hammer">
+                <i class="bi bi-hammer" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-house-gear')" title="House Gear">
+                <i class="bi bi-house-gear" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-gear')" title="Gear">
+                <i class="bi bi-gear" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-brush')" title="Brush">
+                <i class="bi bi-brush" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-bucket')" title="Bucket">
+                <i class="bi bi-bucket" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-lightning')" title="Lightning">
+                <i class="bi bi-lightning" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-star')" title="Star">
+                <i class="bi bi-star" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+            <div class="col-auto">
+              <button type="button" class="btn btn-outline-primary" onclick="selectIcon('bi-check-circle')" title="Check Circle">
+                <i class="bi bi-check-circle" style="font-size: 1.5rem;"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2" id="iconGrid"></div>
+        <div id="iconLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading icons...</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -50,24 +127,35 @@
   let ICONS = [];
   const grid = document.getElementById('iconGrid');
   const search = document.getElementById('iconSearch');
+  const loading = document.getElementById('iconLoading');
 
   async function loadIcons() {
+    loading.style.display = 'block';
+    grid.innerHTML = '';
     try {
       const res = await fetch('/public/js/icons.json');
       ICONS = await res.json();
       renderIcons(ICONS);
     } catch (e) {
+      console.error('Failed to load icons:', e);
       // fallback minimal set if fetch fails
-      ICONS = ['bi-tools','bi-water','bi-droplet','bi-wrench','bi-hammer','bi-house-gear','bi-stars','bi-sun'];
+      ICONS = ['bi-tools','bi-water','bi-droplet','bi-wrench','bi-hammer','bi-house-gear','bi-stars','bi-sun','bi-gear','bi-brush','bi-bucket','bi-lightning'];
       renderIcons(ICONS);
+    } finally {
+      loading.style.display = 'none';
     }
   }
 
   function renderIcons(list) {
-    grid.innerHTML = (list || []).map(c => `
-      <div class="col-3">
-        <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2" onclick="selectIcon('${c}')">
-          <i class="bi ${c}"></i><span class="small text-truncate" style="max-width:120px">${c}</span>
+    if (!list || list.length === 0) {
+      grid.innerHTML = '<div class="col-12"><p class="text-muted text-center">No icons found. Try a different search term.</p></div>';
+      return;
+    }
+    grid.innerHTML = list.map(c => `
+      <div class="col-2 col-md-1">
+        <button type="button" class="btn btn-outline-secondary w-100 p-3 d-flex flex-column align-items-center justify-content-center" onclick="selectIcon('${c}')" title="${c}" style="min-height: 80px;">
+          <i class="bi ${c}" style="font-size: 1.5rem; margin-bottom: 0.25rem;"></i>
+          <span class="small text-truncate" style="max-width: 100%; font-size: 0.65rem;">${c.replace('bi-', '')}</span>
         </button>
       </div>
     `).join('');
@@ -78,15 +166,26 @@
     const prev = document.getElementById('iconPreview');
     input.value = cls;
     prev.className = 'bi ' + cls;
-    bootstrap.Modal.getInstance(document.getElementById('iconModal')).hide();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('iconModal'));
+    if (modal) {
+      modal.hide();
+    }
   }
+
   search.addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    const filtered = ICONS.filter(c => c.toLowerCase().includes(q));
-    renderIcons(filtered);
+    if (q === '') {
+      renderIcons(ICONS);
+    } else {
+      const filtered = ICONS.filter(c => c.toLowerCase().includes(q));
+      renderIcons(filtered);
+    }
   });
-  // load on open to ensure freshest list
-  document.getElementById('iconModal').addEventListener('show.bs.modal', loadIcons, { once: true });
+
+  // Load icons every time modal opens
+  document.getElementById('iconModal').addEventListener('show.bs.modal', function() {
+    loadIcons();
+  });
 </script>
 <%- include('../partials/footer', { siteSettings }) %>
 

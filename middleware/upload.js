@@ -44,6 +44,7 @@ async function generateImageSizes (buffer, baseName, ext, isGif) {
   } else {
     // Generate thumbnail (300x300)
     const thumbnailBuffer = await sharp(buffer)
+      .rotate()
       .resize(300, 300, { fit: 'cover', withoutEnlargement: true })
       .webp({ quality: 80, effort: 4 })
       .toBuffer();
@@ -64,6 +65,7 @@ async function generateImageSizes (buffer, baseName, ext, isGif) {
 
     // Generate medium (800x800)
     const mediumBuffer = await sharp(buffer)
+      .rotate()
       .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85, effort: 5 })
       .toBuffer();
@@ -81,8 +83,8 @@ async function generateImageSizes (buffer, baseName, ext, isGif) {
 
     // Generate large (1920x1920)
     const largeBuffer = await sharp(buffer)
-      .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
       .rotate()
+      .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85, effort: 6 })
       .toBuffer();
     const largeId = await uploadToGridFS(
