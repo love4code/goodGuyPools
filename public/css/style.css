@@ -1,6 +1,73 @@
-body { background:#fff; }
-.card img { object-fit: cover; }
-.navbar .navbar-brand { letter-spacing: .3px; }
-.ratio iframe { width:100%; height:100%; }
+body {
+  background: #fff;
+}
+.card img {
+  object-fit: cover;
+}
+.navbar .navbar-brand {
+  letter-spacing: 0.3px;
+}
+.ratio iframe {
+  width: 100%;
+  height: 100%;
+}
 
+/* Custom Primary Color - #3371A0 */
+:root {
+  --bs-primary: #3371a0;
+  --bs-primary-rgb: 51, 113, 160;
+}
 
+.btn-primary {
+  background-color: #3371a0 !important;
+  border-color: #3371a0 !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #2a5d87 !important;
+  border-color: #2a5d87 !important;
+}
+
+.btn-outline-primary {
+  color: #3371a0 !important;
+  border-color: #3371a0 !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background-color: #3371a0 !important;
+  border-color: #3371a0 !important;
+  color: #fff !important;
+}
+
+.bg-primary {
+  background-color: #3371a0 !important;
+}
+
+.text-primary {
+  color: #3371a0 !important;
+}
+
+.badge.bg-primary {
+  background-color: #3371a0 !important;
+}
+
+.alert-primary {
+  background-color: #e3ecf5 !important;
+  border-color: #3371a0 !important;
+  color: #1a3d5a !important;
+}
+
+/* Icons default color */
+.bi {
+  color: inherit;
+}
+
+/* Service icons default color */
+.service-icon,
+[class*='bi-']:not(.navbar):not(.footer) {
+  color: #3371a0;
+}
