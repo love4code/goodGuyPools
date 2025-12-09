@@ -5,22 +5,22 @@ const mediaSchema = new mongoose.Schema({
   title: { type: String, default: '' },
   altText: { type: String, default: '' },
   tags: { type: [String], default: [] },
-  // Image size references with file paths and metadata
+  // Image size references with GridFS file IDs and metadata
   sizes: {
     large: {
-      url: { type: String, required: true }, // Relative path from public/uploads/
+      fileId: { type: mongoose.Schema.Types.ObjectId, required: true }, // GridFS file ID
       width: { type: Number },
       height: { type: Number },
       sizeInKb: { type: Number },
     },
     medium: {
-      url: { type: String, required: true },
+      fileId: { type: mongoose.Schema.Types.ObjectId, required: true }, // GridFS file ID
       width: { type: Number },
       height: { type: Number },
       sizeInKb: { type: Number },
     },
     thumbnail: {
-      url: { type: String, required: true },
+      fileId: { type: mongoose.Schema.Types.ObjectId, required: true }, // GridFS file ID
       width: { type: Number },
       height: { type: Number },
       sizeInKb: { type: Number },

@@ -5,7 +5,9 @@
       let projectMainImgUrl = '';
       if (project.images && project.images.length > 0) {
         if (typeof project.images[0] === 'object' && project.images[0].sizes) {
-          projectMainImgUrl = '/public/' + (project.images[0].sizes.large?.url || project.images[0].sizes.medium?.url || project.images[0].sizes.thumbnail?.url || '');
+          projectMainImgUrl = project.images[0].sizes.large?.fileId ? '/admin/media/image/' + project.images[0].sizes.large.fileId :
+                              project.images[0].sizes.medium?.fileId ? '/admin/media/image/' + project.images[0].sizes.medium.fileId :
+                              project.images[0].sizes.thumbnail?.fileId ? '/admin/media/image/' + project.images[0].sizes.thumbnail.fileId : '';
         } else if (typeof project.images[0] === 'string') {
           projectMainImgUrl = project.images[0];
         }
@@ -31,7 +33,9 @@
           <% 
             let galleryImgUrl = '';
             if (typeof img === 'object' && img.sizes) {
-              galleryImgUrl = '/public/' + (img.sizes.medium?.url || img.sizes.large?.url || img.sizes.thumbnail?.url || '');
+              galleryImgUrl = img.sizes.medium?.fileId ? '/admin/media/image/' + img.sizes.medium.fileId :
+                              img.sizes.large?.fileId ? '/admin/media/image/' + img.sizes.large.fileId :
+                              img.sizes.thumbnail?.fileId ? '/admin/media/image/' + img.sizes.thumbnail.fileId : '';
             } else if (typeof img === 'string') {
               galleryImgUrl = img;
             }

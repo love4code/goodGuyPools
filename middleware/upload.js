@@ -3,6 +3,7 @@ const path = require('path');
 const sharp = require('sharp');
 const fs = require('fs').promises;
 const mongoose = require('mongoose');
+const { uploadToGridFS } = require('../utils/gridfs');
 
 // Use memory storage so we can process with sharp first
 const storage = multer.memoryStorage();
@@ -33,7 +34,7 @@ async function ensureUploadsDir () {
   }
 }
 
-// Helper function to generate multiple image sizes and save to file system
+// Helper function to generate multiple image sizes and upload to GridFS
 async function generateImageSizes (
   buffer,
   mediaId,
@@ -42,39 +43,36 @@ async function generateImageSizes (
   isGif,
   isSvg,
 ) {
-  const uploadsDir = path.join(
-    __dirname,
-    '..',
-    'public',
-    'uploads',
-    mediaId.toString(),
-  );
-  await fs.mkdir(uploadsDir, { recursive: true });
-
   const sizes = {};
 
   if (isSvg) {
     // For SVG, save as-is (no resizing)
-    const svgPath = path.join(uploadsDir, 'large.svg');
-    await fs.writeFile(svgPath, buffer);
-    const stats = await fs.stat(svgPath);
+    const fileId = await uploadToGridFS(buffer, `${mediaId}-large.svg`, {
+      mediaId: mediaId.toString(),
+      size: 'large',
+      type: 'svg',
+    });
+    const sizeInKb = Math.round(buffer.length / 1024);
     sizes.large = {
-      url: `uploads/${mediaId}/large.svg`,
-      sizeInKb: Math.round(stats.size / 1024),
+      fileId,
+      sizeInKb,
     };
     sizes.medium = { ...sizes.large };
     sizes.thumbnail = { ...sizes.large };
   } else if (isGif) {
     // For GIFs, only store original (don't resize to preserve animation)
-    const gifPath = path.join(uploadsDir, 'large.gif');
-    await fs.writeFile(gifPath, buffer);
-    const stats = await fs.stat(gifPath);
+    const fileId = await uploadToGridFS(buffer, `${mediaId}-large.gif`, {
+      mediaId: mediaId.toString(),
+      size: 'large',
+      type: 'gif',
+    });
     const metadata = await sharp(buffer).metadata();
+    const sizeInKb = Math.round(buffer.length / 1024);
     sizes.large = {
-      url: `uploads/${mediaId}/large.gif`,
+      fileId,
       width: metadata.width,
       height: metadata.height,
-      sizeInKb: Math.round(stats.size / 1024),
+      sizeInKb,
     };
     sizes.medium = { ...sizes.large };
     sizes.thumbnail = { ...sizes.large };
@@ -85,15 +83,17 @@ async function generateImageSizes (
       .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80, effort: 4 })
       .toBuffer();
-    const thumbnailPath = path.join(uploadsDir, 'thumbnail.webp');
-    await fs.writeFile(thumbnailPath, thumbnailBuffer);
-    const thumbnailStats = await fs.stat(thumbnailPath);
+    const thumbnailFileId = await uploadToGridFS(
+      thumbnailBuffer,
+      `${mediaId}-thumbnail.webp`,
+      { mediaId: mediaId.toString(), size: 'thumbnail', type: 'webp' },
+    );
     const thumbnailMeta = await sharp(thumbnailBuffer).metadata();
     sizes.thumbnail = {
-      url: `uploads/${mediaId}/thumbnail.webp`,
+      fileId: thumbnailFileId,
       width: thumbnailMeta.width,
       height: thumbnailMeta.height,
-      sizeInKb: Math.round(thumbnailStats.size / 1024),
+      sizeInKb: Math.round(thumbnailBuffer.length / 1024),
     };
 
     // Generate medium (~900px width max)
@@ -102,15 +102,17 @@ async function generateImageSizes (
       .resize(900, 900, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85, effort: 5 })
       .toBuffer();
-    const mediumPath = path.join(uploadsDir, 'medium.webp');
-    await fs.writeFile(mediumPath, mediumBuffer);
-    const mediumStats = await fs.stat(mediumPath);
+    const mediumFileId = await uploadToGridFS(
+      mediumBuffer,
+      `${mediaId}-medium.webp`,
+      { mediaId: mediaId.toString(), size: 'medium', type: 'webp' },
+    );
     const mediumMeta = await sharp(mediumBuffer).metadata();
     sizes.medium = {
-      url: `uploads/${mediaId}/medium.webp`,
+      fileId: mediumFileId,
       width: mediumMeta.width,
       height: mediumMeta.height,
-      sizeInKb: Math.round(mediumStats.size / 1024),
+      sizeInKb: Math.round(mediumBuffer.length / 1024),
     };
 
     // Generate large (~1600px width max)
@@ -119,28 +121,28 @@ async function generateImageSizes (
       .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85, effort: 6 })
       .toBuffer();
-    const largePath = path.join(uploadsDir, 'large.webp');
-    await fs.writeFile(largePath, largeBuffer);
-    const largeStats = await fs.stat(largePath);
+    const largeFileId = await uploadToGridFS(
+      largeBuffer,
+      `${mediaId}-large.webp`,
+      { mediaId: mediaId.toString(), size: 'large', type: 'webp' },
+    );
     const largeMeta = await sharp(largeBuffer).metadata();
     sizes.large = {
-      url: `uploads/${mediaId}/large.webp`,
+      fileId: largeFileId,
       width: largeMeta.width,
       height: largeMeta.height,
-      sizeInKb: Math.round(largeStats.size / 1024),
+      sizeInKb: Math.round(largeBuffer.length / 1024),
     };
   }
 
   return sizes;
 }
 
-// Process image: resize, convert to webp (except GIF/SVG), compress, save to file system
+// Process image: resize, convert to webp (except GIF/SVG), compress, upload to GridFS
 // Special handling for favicon uploads: resize to 32x32px
 async function processImage (req, res, next) {
   if (!req.file) return next();
   try {
-    await ensureUploadsDir();
-
     const ext = path.extname(req.file.originalname).toLowerCase();
     const base = path
       .basename(req.file.originalname, ext)
@@ -150,22 +152,14 @@ async function processImage (req, res, next) {
     const isSvg = ext === '.svg';
     const isFavicon = req.file.fieldname === 'faviconUpload';
 
-    // Generate unique media ID for directory
+    // Generate unique media ID
     const mediaId = new mongoose.Types.ObjectId();
 
     // Special handling for favicon: resize to 32x32px
     if (isFavicon) {
-      const uploadsDir = path.join(
-        __dirname,
-        '..',
-        'public',
-        'uploads',
-        mediaId.toString(),
-      );
-      await fs.mkdir(uploadsDir, { recursive: true });
-
       let faviconBuffer;
       let faviconExt;
+      let mimeType;
 
       if (isGif) {
         faviconBuffer = await sharp(req.file.buffer)
@@ -173,43 +167,43 @@ async function processImage (req, res, next) {
           .gif()
           .toBuffer();
         faviconExt = '.gif';
+        mimeType = 'image/gif';
       } else if (isSvg) {
         faviconBuffer = req.file.buffer;
         faviconExt = '.svg';
+        mimeType = 'image/svg+xml';
       } else {
         faviconBuffer = await sharp(req.file.buffer)
           .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
           .png()
           .toBuffer();
         faviconExt = '.png';
+        mimeType = 'image/png';
       }
 
-      const faviconPath = path.join(uploadsDir, `favicon${faviconExt}`);
-      await fs.writeFile(faviconPath, faviconBuffer);
-      const stats = await fs.stat(faviconPath);
+      const faviconFileId = await uploadToGridFS(
+        faviconBuffer,
+        `${mediaId}-favicon${faviconExt}`,
+        { mediaId: mediaId.toString(), type: 'favicon' },
+      );
 
       req.file.mediaId = mediaId;
       req.file.filename = `favicon${faviconExt}`;
-      req.file.path = `uploads/${mediaId}/favicon${faviconExt}`;
       req.file.sizes = {
         thumbnail: {
-          url: `uploads/${mediaId}/favicon${faviconExt}`,
-          sizeInKb: Math.round(stats.size / 1024),
+          fileId: faviconFileId,
+          sizeInKb: Math.round(faviconBuffer.length / 1024),
         },
         medium: {
-          url: `uploads/${mediaId}/favicon${faviconExt}`,
-          sizeInKb: Math.round(stats.size / 1024),
+          fileId: faviconFileId,
+          sizeInKb: Math.round(faviconBuffer.length / 1024),
         },
         large: {
-          url: `uploads/${mediaId}/favicon${faviconExt}`,
-          sizeInKb: Math.round(stats.size / 1024),
+          fileId: faviconFileId,
+          sizeInKb: Math.round(faviconBuffer.length / 1024),
         },
       };
-      req.file.mimetype = isGif
-        ? 'image/gif'
-        : isSvg
-        ? 'image/svg+xml'
-        : 'image/png';
+      req.file.mimetype = mimeType;
 
       return next();
     }
@@ -229,7 +223,6 @@ async function processImage (req, res, next) {
     req.file.filename = `${base}-large${
       isSvg ? '.svg' : isGif ? '.gif' : '.webp'
     }`;
-    req.file.path = sizes.large.url;
     req.file.sizes = sizes;
     req.file.mimetype = isGif
       ? 'image/gif'
@@ -263,8 +256,6 @@ async function processImages (req, res, next) {
   if (filesToProcess.length === 0) return next();
 
   try {
-    await ensureUploadsDir();
-
     for (const file of filesToProcess) {
       const ext = path.extname(file.originalname).toLowerCase();
       const base = path
@@ -275,22 +266,14 @@ async function processImages (req, res, next) {
       const isSvg = ext === '.svg';
       const isFavicon = file.fieldname === 'faviconUpload';
 
-      // Generate unique media ID for directory
+      // Generate unique media ID
       const mediaId = new mongoose.Types.ObjectId();
 
       // Special handling for favicon: resize to 32x32px
       if (isFavicon) {
-        const uploadsDir = path.join(
-          __dirname,
-          '..',
-          'public',
-          'uploads',
-          mediaId.toString(),
-        );
-        await fs.mkdir(uploadsDir, { recursive: true });
-
         let faviconBuffer;
         let faviconExt;
+        let mimeType;
 
         if (isGif) {
           faviconBuffer = await sharp(file.buffer)
@@ -298,43 +281,43 @@ async function processImages (req, res, next) {
             .gif()
             .toBuffer();
           faviconExt = '.gif';
+          mimeType = 'image/gif';
         } else if (isSvg) {
           faviconBuffer = file.buffer;
           faviconExt = '.svg';
+          mimeType = 'image/svg+xml';
         } else {
           faviconBuffer = await sharp(file.buffer)
             .resize(32, 32, { fit: 'cover', withoutEnlargement: false })
             .png()
             .toBuffer();
           faviconExt = '.png';
+          mimeType = 'image/png';
         }
 
-        const faviconPath = path.join(uploadsDir, `favicon${faviconExt}`);
-        await fs.writeFile(faviconPath, faviconBuffer);
-        const stats = await fs.stat(faviconPath);
+        const faviconFileId = await uploadToGridFS(
+          faviconBuffer,
+          `${mediaId}-favicon${faviconExt}`,
+          { mediaId: mediaId.toString(), type: 'favicon' },
+        );
 
         file.mediaId = mediaId;
         file.filename = `favicon${faviconExt}`;
-        file.path = `uploads/${mediaId}/favicon${faviconExt}`;
         file.sizes = {
           thumbnail: {
-            url: `uploads/${mediaId}/favicon${faviconExt}`,
-            sizeInKb: Math.round(stats.size / 1024),
+            fileId: faviconFileId,
+            sizeInKb: Math.round(faviconBuffer.length / 1024),
           },
           medium: {
-            url: `uploads/${mediaId}/favicon${faviconExt}`,
-            sizeInKb: Math.round(stats.size / 1024),
+            fileId: faviconFileId,
+            sizeInKb: Math.round(faviconBuffer.length / 1024),
           },
           large: {
-            url: `uploads/${mediaId}/favicon${faviconExt}`,
-            sizeInKb: Math.round(stats.size / 1024),
+            fileId: faviconFileId,
+            sizeInKb: Math.round(faviconBuffer.length / 1024),
           },
         };
-        file.mimetype = isGif
-          ? 'image/gif'
-          : isSvg
-          ? 'image/svg+xml'
-          : 'image/png';
+        file.mimetype = mimeType;
         continue; // Skip to next file
       }
 
@@ -353,7 +336,6 @@ async function processImages (req, res, next) {
       file.filename = `${base}-large${
         isSvg ? '.svg' : isGif ? '.gif' : '.webp'
       }`;
-      file.path = sizes.large.url;
       file.sizes = sizes;
       file.mimetype = isGif
         ? 'image/gif'

@@ -49,7 +49,9 @@
           <% 
             let imgUrl = '';
             if (typeof img === 'object' && img.sizes) {
-              imgUrl = '/public/' + (img.sizes.thumbnail?.url || img.sizes.medium?.url || img.sizes.large?.url || '');
+              imgUrl = img.sizes.thumbnail?.fileId ? '/admin/media/image/' + img.sizes.thumbnail.fileId :
+                       img.sizes.medium?.fileId ? '/admin/media/image/' + img.sizes.medium.fileId :
+                       img.sizes.large?.fileId ? '/admin/media/image/' + img.sizes.large.fileId : '';
             }
           %>
           <% if (imgUrl) { %>
@@ -334,7 +336,9 @@ async function updateProjectGalleryPreview(mediaIds) {
     for (const id of mediaIds) {
       const media = items.find(m => String(m._id) === String(id));
       if (media && media.sizes) {
-        const imageUrl = '/public/' + (media.sizes.thumbnail?.url || media.sizes.medium?.url || media.sizes.large?.url || '');
+        const imageUrl = media.sizes.thumbnail?.fileId ? '/admin/media/image/' + media.sizes.thumbnail.fileId :
+                         media.sizes.medium?.fileId ? '/admin/media/image/' + media.sizes.medium.fileId :
+                         media.sizes.large?.fileId ? '/admin/media/image/' + media.sizes.large.fileId : '';
         if (imageUrl) {
           const col = document.createElement('div');
           col.className = 'col-md-2';

@@ -2,6 +2,7 @@ const Media = require('../models/Media');
 const fs = require('fs').promises;
 const path = require('path');
 const mongoose = require('mongoose');
+const { getGridFSBucket, deleteFromGridFS } = require('../utils/gridfs');
 
 exports.list = async (req, res) => {
   const { q = '', page = 1 } = req.query;
@@ -90,18 +91,17 @@ exports.remove = async (req, res) => {
       req.flash('error', 'Not found');
       return res.redirect('/admin/media');
     }
-    // Delete all files from file system
-    const mediaDir = path.join(
-      __dirname,
-      '..',
-      'public',
-      'uploads',
-      req.params.id,
-    );
-    try {
-      await fs.rm(mediaDir, { recursive: true, force: true });
-    } catch (err) {
-      console.error('Error deleting media directory:', err);
+    // Delete all files from GridFS
+    if (media.sizes) {
+      if (media.sizes.thumbnail?.fileId) {
+        await deleteFromGridFS(media.sizes.thumbnail.fileId);
+      }
+      if (media.sizes.medium?.fileId) {
+        await deleteFromGridFS(media.sizes.medium.fileId);
+      }
+      if (media.sizes.large?.fileId) {
+        await deleteFromGridFS(media.sizes.large.fileId);
+      }
     }
     await Media.findByIdAndDelete(req.params.id);
     req.flash('success', 'Deleted');
@@ -137,12 +137,17 @@ exports.bulkRemove = async (req, res) => {
       try {
         const media = await Media.findById(id);
         if (media) {
-          // Delete all files from file system
-          const mediaDir = path.join(__dirname, '..', 'public', 'uploads', id);
-          try {
-            await fs.rm(mediaDir, { recursive: true, force: true });
-          } catch (err) {
-            console.error(`Error deleting media directory for ${id}:`, err);
+          // Delete all files from GridFS
+          if (media.sizes) {
+            if (media.sizes.thumbnail?.fileId) {
+              await deleteFromGridFS(media.sizes.thumbnail.fileId);
+            }
+            if (media.sizes.medium?.fileId) {
+              await deleteFromGridFS(media.sizes.medium.fileId);
+            }
+            if (media.sizes.large?.fileId) {
+              await deleteFromGridFS(media.sizes.large.fileId);
+            }
           }
 
           await Media.findByIdAndDelete(id);
@@ -215,5 +220,49 @@ exports.update = async (req, res) => {
   } catch (e) {
     req.flash('error', e.message);
     res.redirect(`/admin/media/${req.params.id}/edit`);
+  }
+};
+
+exports.serveImage = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(fileId)) {
+      return res.status(400).send('Invalid file ID');
+    }
+
+    const bucket = getGridFSBucket();
+    const fileIdObj = new mongoose.Types.ObjectId(fileId);
+
+    // Check if file exists
+    const files = await bucket.find({ _id: fileIdObj }).toArray();
+    if (files.length === 0) {
+      return res.status(404).send('File not found');
+    }
+
+    const file = files[0];
+
+    // Set appropriate headers
+    res.set({
+      'Content-Type': file.contentType || 'image/webp',
+      'Content-Length': file.length,
+      'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+    });
+
+    // Stream the file
+    const downloadStream = bucket.openDownloadStream(fileIdObj);
+    downloadStream.pipe(res);
+
+    downloadStream.on('error', (err) => {
+      console.error('Error streaming file:', err);
+      if (!res.headersSent) {
+        res.status(500).send('Error streaming file');
+      }
+    });
+  } catch (error) {
+    console.error('Error serving image:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Error serving image');
+    }
   }
 };

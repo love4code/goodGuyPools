@@ -68,9 +68,9 @@ async function loadMediaItems() {
       // Ensure ID is always a string
       const mediaId = String(item._id);
       const isSelected = selectedMediaIds.map(id => String(id)).includes(mediaId);
-      const thumbnailUrl = item.sizes?.thumbnail?.url ? `/public/${item.sizes.thumbnail.url}` : 
-                          item.sizes?.medium?.url ? `/public/${item.sizes.medium.url}` : 
-                          item.sizes?.large?.url ? `/public/${item.sizes.large.url}` : '';
+      const thumbnailUrl = item.sizes?.thumbnail?.fileId ? `/admin/media/image/${item.sizes.thumbnail.fileId}` :
+                          item.sizes?.medium?.fileId ? `/admin/media/image/${item.sizes.medium.fileId}` :
+                          item.sizes?.large?.fileId ? `/admin/media/image/${item.sizes.large.fileId}` : '';
       
       const col = document.createElement('div');
       col.className = 'col-md-3';

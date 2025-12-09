@@ -6,7 +6,9 @@
         <h2 class="h5 mb-3">Edit Media</h2>
         <div class="mb-3">
           <% 
-            let mediaImgUrl = '/public/' + (media.sizes?.large?.url || media.sizes?.medium?.url || media.sizes?.thumbnail?.url || '');
+            let mediaImgUrl = media.sizes?.large?.fileId ? '/admin/media/image/' + media.sizes.large.fileId :
+                              media.sizes?.medium?.fileId ? '/admin/media/image/' + media.sizes.medium.fileId :
+                              media.sizes?.thumbnail?.fileId ? '/admin/media/image/' + media.sizes.thumbnail.fileId : '';
           %>
           <img src="<%= mediaImgUrl %>" class="img-fluid rounded" alt="<%= media.altText || media.title || media.originalFilename %>">
           <div class="text-muted small mt-2">

@@ -6,7 +6,9 @@
         let mainImageUrl = '';
         if (product.mainImage) {
           if (typeof product.mainImage === 'object' && product.mainImage.sizes) {
-            mainImageUrl = '/public/' + (product.mainImage.sizes.large?.url || product.mainImage.sizes.medium?.url || product.mainImage.sizes.thumbnail?.url || '');
+            mainImageUrl = product.mainImage.sizes.large?.fileId ? '/admin/media/image/' + product.mainImage.sizes.large.fileId :
+                           product.mainImage.sizes.medium?.fileId ? '/admin/media/image/' + product.mainImage.sizes.medium.fileId :
+                           product.mainImage.sizes.thumbnail?.fileId ? '/admin/media/image/' + product.mainImage.sizes.thumbnail.fileId : '';
           }
         } else if (product.image) {
           mainImageUrl = product.image;
@@ -22,7 +24,9 @@
             <% 
               let galleryImgUrl = '';
               if (typeof img === 'object' && img.sizes) {
-                galleryImgUrl = '/public/' + (img.sizes.medium?.url || img.sizes.large?.url || img.sizes.thumbnail?.url || '');
+                galleryImgUrl = img.sizes.medium?.fileId ? '/admin/media/image/' + img.sizes.medium.fileId :
+                                img.sizes.large?.fileId ? '/admin/media/image/' + img.sizes.large.fileId :
+                                img.sizes.thumbnail?.fileId ? '/admin/media/image/' + img.sizes.thumbnail.fileId : '';
               } else if (typeof img === 'string') {
                 galleryImgUrl = img;
               }

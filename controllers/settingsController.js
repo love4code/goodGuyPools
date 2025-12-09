@@ -51,22 +51,29 @@ exports.updateSettings = async (req, res) => {
       tags: ['favicon'],
       sizes: faviconFile.sizes || {},
     });
-    // Store as path for favicon (since it's a string field, not Media ref)
-    settings.favicon = `/public/${faviconFile.path}`;
+    // Store GridFS file ID for favicon
+    const faviconFileId =
+      faviconFile.sizes?.large?.fileId ||
+      faviconFile.sizes?.medium?.fileId ||
+      faviconFile.sizes?.thumbnail?.fileId;
+    if (faviconFileId) {
+      settings.favicon = `/admin/media/image/${faviconFileId}`;
+    }
   } else if (body.favicon && body.favicon.trim() !== '') {
-    // If it's a valid ObjectId, it's from media picker - get the path
+    // If it's a valid ObjectId, it's from media picker - get the GridFS file ID
     if (mongoose.Types.ObjectId.isValid(body.favicon.trim())) {
       const faviconMedia = await Media.findById(body.favicon.trim());
       if (faviconMedia && faviconMedia.sizes) {
-        settings.favicon = `/public/${
-          faviconMedia.sizes.thumbnail?.url ||
-          faviconMedia.sizes.medium?.url ||
-          faviconMedia.sizes.large?.url ||
-          ''
-        }`;
+        const faviconFileId =
+          faviconMedia.sizes.thumbnail?.fileId ||
+          faviconMedia.sizes.medium?.fileId ||
+          faviconMedia.sizes.large?.fileId;
+        if (faviconFileId) {
+          settings.favicon = `/admin/media/image/${faviconFileId}`;
+        }
       }
     } else {
-      // It's a path string (legacy)
+      // It's a path string (legacy or already a full URL)
       settings.favicon = body.favicon.trim();
     }
   }

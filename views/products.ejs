@@ -10,7 +10,9 @@
               let productImgUrl = '';
               if (p.mainImage) {
                 if (typeof p.mainImage === 'object' && p.mainImage.sizes) {
-                  productImgUrl = '/public/' + (p.mainImage.sizes.medium?.url || p.mainImage.sizes.large?.url || p.mainImage.sizes.thumbnail?.url || '');
+                  productImgUrl = p.mainImage.sizes.medium?.fileId ? '/admin/media/image/' + p.mainImage.sizes.medium.fileId :
+                                  p.mainImage.sizes.large?.fileId ? '/admin/media/image/' + p.mainImage.sizes.large.fileId :
+                                  p.mainImage.sizes.thumbnail?.fileId ? '/admin/media/image/' + p.mainImage.sizes.thumbnail.fileId : '';
                 }
               } else if (p.image) {
                 productImgUrl = p.image;

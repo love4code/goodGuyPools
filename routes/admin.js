@@ -93,6 +93,8 @@ router.post(
 );
 // Bulk delete endpoint (must be before :id routes)
 router.post('/media/bulk-delete', requireAuth, mediaController.bulkRemove);
+// Serve images from GridFS (must be before :id routes)
+router.get('/media/image/:fileId', mediaController.serveImage);
 // API list endpoint
 router.get('/media/api/list', requireAuth, mediaController.apiList);
 // Edit media metadata

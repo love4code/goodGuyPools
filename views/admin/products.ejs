@@ -26,7 +26,8 @@
                 let productThumbUrl = '';
                 if (p.mainImage) {
                   if (typeof p.mainImage === 'object' && p.mainImage.sizes) {
-                    productThumbUrl = '/public/' + (p.mainImage.sizes.thumbnail?.url || p.mainImage.sizes.medium?.url || '');
+                    productThumbUrl = p.mainImage.sizes.thumbnail?.fileId ? '/admin/media/image/' + p.mainImage.sizes.thumbnail.fileId :
+                                      p.mainImage.sizes.medium?.fileId ? '/admin/media/image/' + p.mainImage.sizes.medium.fileId : '';
                   }
                 } else if (p.image) {
                   productThumbUrl = p.image;
