@@ -52,11 +52,14 @@
       <% if (product.sizes && product.sizes.length > 0) { %>
         <div class="mb-4">
           <h3 class="h5 mb-3">Available Sizes</h3>
-          <div class="d-flex flex-wrap gap-2">
+          <div class="d-flex flex-wrap gap-2" id="sizeTags">
             <% product.sizes.forEach(size => { %>
-              <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;"><%= size %></span>
+              <span class="badge bg-secondary size-tag" data-size="<%= size %>" style="font-size: 1rem; padding: 0.5rem 1rem; cursor: pointer; user-select: none;">
+                <%= size %>
+              </span>
             <% }) %>
           </div>
+          <small class="text-muted d-block mt-2">Click on sizes you're interested in</small>
         </div>
       <% } %>
       
@@ -100,14 +103,13 @@
                 <input type="tel" name="phone" class="form-control" required>
               </div>
               <% if (product.sizes && product.sizes.length > 0) { %>
-                <div class="col-md-6">
-                  <label class="form-label">Size</label>
-                  <select name="size" class="form-select">
-                    <option value="">Select a size...</option>
-                    <% product.sizes.forEach(size => { %>
-                      <option value="<%= size %>"><%= size %></option>
-                    <% }) %>
-                  </select>
+                <div class="col-12">
+                  <label class="form-label">Selected Sizes</label>
+                  <div id="selectedSizesDisplay" class="mb-2">
+                    <small class="text-muted">No sizes selected</small>
+                  </div>
+                  <!-- Hidden inputs for selected sizes -->
+                  <div id="selectedSizesInputs"></div>
                 </div>
               <% } %>
               <div class="col-12">
@@ -124,5 +126,59 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Size tag selection functionality
+  (function() {
+    const sizeTags = document.querySelectorAll('.size-tag');
+    const selectedSizes = new Set();
+    const selectedSizesDisplay = document.getElementById('selectedSizesDisplay');
+    const selectedSizesInputs = document.getElementById('selectedSizesInputs');
+    
+    if (sizeTags.length > 0 && selectedSizesDisplay && selectedSizesInputs) {
+      sizeTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+          const size = this.getAttribute('data-size');
+          
+          if (selectedSizes.has(size)) {
+            // Deselect
+            selectedSizes.delete(size);
+            this.classList.remove('bg-primary');
+            this.classList.add('bg-secondary');
+          } else {
+            // Select
+            selectedSizes.add(size);
+            this.classList.remove('bg-secondary');
+            this.classList.add('bg-primary');
+          }
+          
+          updateSelectedSizesDisplay();
+        });
+      });
+      
+      function updateSelectedSizesDisplay() {
+        // Update display
+        if (selectedSizes.size === 0) {
+          selectedSizesDisplay.innerHTML = '<small class="text-muted">No sizes selected</small>';
+        } else {
+          const badges = Array.from(selectedSizes).map(size => 
+            `<span class="badge bg-primary me-2">${size}</span>`
+          ).join('');
+          selectedSizesDisplay.innerHTML = badges;
+        }
+        
+        // Update hidden inputs
+        selectedSizesInputs.innerHTML = '';
+        selectedSizes.forEach(size => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'sizes[]';
+          input.value = size;
+          selectedSizesInputs.appendChild(input);
+        });
+      }
+    }
+  })();
+</script>
 
 <%- include('partials/footer', { siteSettings }) %>

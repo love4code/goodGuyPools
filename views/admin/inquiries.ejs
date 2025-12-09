@@ -35,7 +35,17 @@
                 <td><strong><%= inq.name %></strong></td>
                 <td><%= inq.email %></td>
                 <td><%= inq.phone %></td>
-                <td><%= inq.size || '-' %></td>
+                <td>
+                  <% if (inq.sizes && inq.sizes.length > 0) { %>
+                    <% inq.sizes.forEach(size => { %>
+                      <span class="badge bg-primary me-1"><%= size %></span>
+                    <% }) %>
+                  <% } else if (inq.size) { %>
+                    <%= inq.size %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
                 <td>
                   <%= inq.description ? (inq.description.length > 50 ? inq.description.substring(0, 50) + '...' : inq.description) : '-' %>
                 </td>

@@ -448,7 +448,7 @@ exports.publicDetail = async (req, res) => {
 
 exports.requestQuote = async (req, res) => {
   try {
-    const { name, email, phone, size, description } = req.body;
+    const { name, email, phone, size, sizes, description } = req.body;
     const product = await Product.findById(req.body.productId);
 
     if (!product) {
@@ -461,6 +461,17 @@ exports.requestQuote = async (req, res) => {
       return res.redirect(`/products/${product.slug}`);
     }
 
+    // Handle sizes - support both new array format and legacy single size
+    let selectedSizes = [];
+    if (sizes && Array.isArray(sizes)) {
+      selectedSizes = sizes.filter((s) => s && s.trim() !== '');
+    } else if (sizes && typeof sizes === 'string') {
+      selectedSizes = [sizes];
+    } else if (size) {
+      // Legacy support for single size
+      selectedSizes = [size];
+    }
+
     // Save inquiry to database
     await Inquiry.create({
       type: 'product',
@@ -469,20 +480,27 @@ exports.requestQuote = async (req, res) => {
       name,
       email,
       phone,
-      size: size || '',
+      size: selectedSizes.length > 0 ? selectedSizes[0] : '', // Keep for backwards compatibility
+      sizes: selectedSizes, // New array field
       description: description || '',
     });
 
     // Send email
     const { sendEmail } = require('../utils/email');
     const emailSubject = `New Product Inquiry: ${product.name}`;
+    const sizesText =
+      selectedSizes.length > 0 ? selectedSizes.join(', ') : 'Not specified';
     const emailBody = `
       <h2>New Product Inquiry</h2>
       <p><strong>Product:</strong> ${product.name}</p>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${phone}</p>
-      ${size ? `<p><strong>Size:</strong> ${size}</p>` : ''}
+      ${
+        selectedSizes.length > 0
+          ? `<p><strong>Selected Sizes:</strong> ${sizesText}</p>`
+          : ''
+      }
       ${description ? `<p><strong>Message:</strong><br>${description}</p>` : ''}
     `;
 

@@ -14,11 +14,11 @@ const inquirySchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, lowercase: true },
   phone: { type: String, required: true, trim: true },
-  size: { type: String }, // If product inquiry
+  size: { type: String }, // Legacy single size (for backwards compatibility)
+  sizes: { type: [String], default: [] }, // Multiple sizes user is interested in
   description: { type: String, default: '' },
   isRead: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('Inquiry', inquirySchema);
-

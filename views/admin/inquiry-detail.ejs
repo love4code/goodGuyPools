@@ -45,7 +45,16 @@
         <strong>Phone:</strong>
         <div><a href="tel:<%= inquiry.phone %>"><%= inquiry.phone %></a></div>
       </div>
-      <% if (inquiry.size) { %>
+      <% if (inquiry.sizes && inquiry.sizes.length > 0) { %>
+        <div class="col-md-6">
+          <strong>Selected Sizes:</strong>
+          <div>
+            <% inquiry.sizes.forEach(size => { %>
+              <span class="badge bg-primary me-2 mb-2"><%= size %></span>
+            <% }) %>
+          </div>
+        </div>
+      <% } else if (inquiry.size) { %>
         <div class="col-md-6">
           <strong>Size:</strong>
           <div><%= inquiry.size %></div>
