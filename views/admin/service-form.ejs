@@ -1,9 +1,16 @@
-<%- include('../partials/header', { title: service ? 'Edit Service' : 'New Service', siteSettings }) %>
-<h1 class="h4 mb-3"><%= service ? 'Edit Service' : 'New Service' %></h1>
+<%- include('../partials/admin-header', { title: service ? 'Edit Service' : 'New Service', currentPage: 'services' }) %>
 <form action="<%= service ? '/admin/services/' + service._id : '/admin/services' %>" method="POST" class="row g-3">
   <div class="col-md-6">
-    <label class="form-label">Title *</label>
-    <input type="text" name="title" class="form-control" value="<%= service ? service.title : '' %>" required>
+    <label class="form-label">Service Name *</label>
+    <input type="text" name="name" class="form-control" value="<%= service ? (service.name || service.title) : '' %>" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Order</label>
+    <input type="number" name="order" class="form-control" value="<%= service ? service.order : 0 %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Short Description</label>
+    <input type="text" name="shortDescription" class="form-control" value="<%= service ? service.shortDescription : '' %>" placeholder="Brief description for listings">
   </div>
   <div class="col-md-12">
     <label class="form-label">Icon *</label>
@@ -18,12 +25,8 @@
     </div>
     <div class="form-text">Click "Choose Icon" to browse and select from Bootstrap Icons. Icon is required for display on the homepage.</div>
   </div>
-  <div class="col-md-3">
-    <label class="form-label">Order</label>
-    <input type="number" name="order" class="form-control" value="<%= service ? service.order : 0 %>">
-  </div>
   <div class="col-md-12">
-    <label class="form-label">Description</label>
+    <label class="form-label">Full Description</label>
     <textarea name="description" rows="6" class="form-control"><%= service ? service.description : '' %></textarea>
   </div>
   <div class="col-12">
@@ -187,6 +190,6 @@
     loadIcons();
   });
 </script>
-<%- include('../partials/footer', { siteSettings }) %>
+<%- include('../partials/admin-footer') %>
 
 

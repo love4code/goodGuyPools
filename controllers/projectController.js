@@ -1,5 +1,6 @@
 const Project = require('../models/Project');
 const Media = require('../models/Media');
+const mongoose = require('mongoose');
 
 exports.list = async (req, res) => {
   const { q = '', type = '', status = '', featured = '', page = 1 } = req.query;
@@ -34,44 +35,44 @@ exports.newForm = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     // Process uploaded gallery images
-    const uploadedGalleryPaths = [];
+    const uploadedGalleryIds = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        if (file.path) {
+        if (file.mediaId) {
           // Save to Media library
           await Media.create({
-            gridfsId: file.gridfsId,
-            filePath: file.path,
+            _id: file.mediaId,
             originalFilename: file.originalname,
             title: req.body.title || '',
             altText: '',
             sizes: file.sizes || {},
           });
-          uploadedGalleryPaths.push(file.path);
+          uploadedGalleryIds.push(file.mediaId);
         }
       }
     }
 
-    // Combine uploaded images with manually entered paths
-    const manualGallery = Array.isArray(req.body.gallery)
-      ? req.body.gallery
-      : req.body.gallery
-      ? req.body.gallery
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-      : [];
+    // Process gallery from media picker (comma-separated Media IDs)
+    const manualGalleryIds = [];
+    if (req.body.images && req.body.images.trim() !== '') {
+      const imageIds = req.body.images
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of imageIds) {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          manualGalleryIds.push(id);
+        }
+      }
+    }
 
-    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+    const allGalleryIds = [...uploadedGalleryIds, ...manualGalleryIds];
 
     const data = {
       title: req.body.title,
-      shortDescription: req.body.shortDescription,
-      description: req.body.description,
-      projectType: req.body.projectType,
-      location: req.body.location,
-      featuredImage: req.body.featuredImage || '',
-      gallery: allGalleryPaths,
+      summary: req.body.shortDescription || req.body.summary,
+      description: req.body.description || '',
+      images: allGalleryIds,
       startDate: req.body.startDate || null,
       endDate: req.body.endDate || null,
       status: req.body.status || 'Planned',
@@ -87,7 +88,7 @@ exports.create = async (req, res) => {
 };
 
 exports.editForm = async (req, res) => {
-  const project = await Project.findById(req.params.id);
+  const project = await Project.findById(req.params.id).populate('images');
   if (!project) {
     req.flash('error', 'Project not found');
     return res.redirect('/admin/projects');
@@ -97,45 +98,55 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      req.flash('error', 'Project not found');
+      return res.redirect('/admin/projects');
+    }
+
     // Process uploaded gallery images
-    const uploadedGalleryPaths = [];
+    const uploadedGalleryIds = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        if (file.path) {
+        if (file.mediaId) {
           // Save to Media library
           await Media.create({
-            gridfsId: file.gridfsId,
-            filePath: file.path,
+            _id: file.mediaId,
             originalFilename: file.originalname,
             title: req.body.title || '',
             altText: '',
             sizes: file.sizes || {},
           });
-          uploadedGalleryPaths.push(file.path);
+          uploadedGalleryIds.push(file.mediaId);
         }
       }
     }
 
-    // Combine uploaded images with manually entered paths
-    const manualGallery = Array.isArray(req.body.gallery)
-      ? req.body.gallery
-      : req.body.gallery
-      ? req.body.gallery
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-      : [];
+    // Process gallery from media picker (comma-separated Media IDs)
+    const manualGalleryIds = [];
+    if (req.body.images && req.body.images.trim() !== '') {
+      const imageIds = req.body.images
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of imageIds) {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          manualGalleryIds.push(id);
+        }
+      }
+    }
 
-    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+    const allGalleryIds = [
+      ...(project.images || []),
+      ...uploadedGalleryIds,
+      ...manualGalleryIds,
+    ];
 
     const update = {
       title: req.body.title,
-      shortDescription: req.body.shortDescription,
-      description: req.body.description,
-      projectType: req.body.projectType,
-      location: req.body.location,
-      featuredImage: req.body.featuredImage || '',
-      gallery: allGalleryPaths,
+      summary: req.body.shortDescription || req.body.summary || '',
+      description: req.body.description || '',
+      images: allGalleryIds,
       startDate: req.body.startDate || null,
       endDate: req.body.endDate || null,
       status: req.body.status || 'Planned',

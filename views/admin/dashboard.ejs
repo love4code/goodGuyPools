@@ -1,139 +1,150 @@
-<%- include('../partials/header', { title: 'Admin Dashboard', settings }) %>
+<%- include('../partials/admin-header', { title: 'Dashboard', currentPage: 'dashboard' }) %>
+
 <div class="mb-4">
-  <h1 class="h3">Dashboard</h1>
+  <div class="d-flex justify-content-between align-items-center">
+    <h2 class="h4 mb-0">Dashboard Overview</h2>
+    <div class="d-flex gap-2">
+      <a href="/admin/products/new" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Product
+      </a>
+      <a href="/admin/projects/new" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Project
+      </a>
+      <a href="/admin/services/new" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Service
+      </a>
+      <a href="/admin/media" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-upload"></i> Upload Media
+      </a>
+    </div>
+  </div>
 </div>
+
 <div class="row g-3 mb-4">
   <div class="col-md-3">
     <div class="card text-center">
       <div class="card-body">
-        <div class="display-6"><%= stats.projectCount %></div>
+        <div class="display-6"><%= stats.productCount || 0 %></div>
+        <div class="text-muted">Products</div>
+        <a href="/admin/products" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="display-6"><%= stats.projectCount || 0 %></div>
         <div class="text-muted">Projects</div>
+        <a href="/admin/projects" class="btn btn-sm btn-outline-primary mt-2">View All</a>
       </div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="card text-center">
       <div class="card-body">
-        <div class="display-6"><%= stats.contactCount %></div>
-        <div class="text-muted">Contact Inquiries</div>
-        <% if (stats.unreadContactCount > 0) { %>
-          <div class="mt-2">
-            <span class="badge bg-warning text-dark"><%= stats.unreadContactCount %> Unread</span>
-          </div>
-        <% } %>
+        <div class="display-6"><%= stats.serviceCount || 0 %></div>
+        <div class="text-muted">Services</div>
+        <a href="/admin/services" class="btn btn-sm btn-outline-primary mt-2">View All</a>
       </div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="card text-center">
       <div class="card-body">
-        <div class="display-6"><%= stats.productQuoteCount || 0 %></div>
-        <div class="text-muted">Product Quotes</div>
-        <% if (stats.unreadProductQuoteCount > 0) { %>
-          <div class="mt-2">
-            <span class="badge bg-warning text-dark"><%= stats.unreadProductQuoteCount %> Unread</span>
-          </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="display-6"><%= stats.totalViews %></div>
-        <div class="text-muted">Total Views</div>
+        <div class="display-6"><%= stats.mediaCount || 0 %></div>
+        <div class="text-muted">Media Items</div>
+        <a href="/admin/media" class="btn btn-sm btn-outline-primary mt-2">View All</a>
       </div>
     </div>
   </div>
 </div>
+
 <div class="row g-4">
-  <div class="col-md-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h5">Recent Contact Inquiries</h2>
-        <ul class="list-group list-group-flush">
-          <% if (recentContacts && recentContacts.length) { %>
-            <% recentContacts.forEach(c => { %>
-              <li class="list-group-item d-flex justify-content-between align-items-center <%= !c.isRead ? 'table-warning' : '' %>">
-                <div>
-                  <strong><%= c.name %></strong> · <span class="text-muted"><%= c.town %></span>
-                  <div class="small text-muted">
-                    <%= c.projectType %> · <%= new Date(c.createdAt).toLocaleString() %>
-                    <% if (!c.isRead) { %>
-                      <span class="badge bg-warning text-dark ms-2">New</span>
-                    <% } %>
-                  </div>
-                </div>
-                <a class="btn btn-sm btn-outline-primary" href="/admin/contacts/<%= c._id %>">View</a>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="list-group-item">No contact inquiries yet.</li>
-          <% } %>
-        </ul>
-        <div class="mt-2">
-          <a href="/admin/contacts" class="btn btn-sm btn-outline-secondary">View All Contacts</a>
-        </div>
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Recent Inquiries</h2>
+        <a href="/admin/inquiries" class="btn btn-sm btn-outline-secondary">View All</a>
       </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card h-100">
       <div class="card-body">
-        <h2 class="h5">Recent Product Quote Requests</h2>
-        <ul class="list-group list-group-flush">
-          <% if (recentProductQuotes && recentProductQuotes.length) { %>
-            <% recentProductQuotes.forEach(q => { %>
-              <li class="list-group-item d-flex justify-content-between align-items-center <%= !q.isRead ? 'table-warning' : '' %>">
-                <div>
-                  <strong><%= q.name %></strong> · <span class="text-muted"><%= q.city %></span>
-                  <div class="small text-muted">
-                    <span class="badge bg-info"><%= q.productName %></span>
-                    · <%= q.serviceType %>
-                    <% if (q.selectedSizes && q.selectedSizes.length > 0) { %>
-                      · Sizes: <%= q.selectedSizes.join(', ') %>
-                    <% } %>
-                    <% if (!q.isRead) { %>
-                      <span class="badge bg-warning text-dark ms-2">New</span>
-                    <% } %>
-                  </div>
-                  <div class="small text-muted"><%= new Date(q.createdAt).toLocaleString() %></div>
-                </div>
-                <a class="btn btn-sm btn-outline-primary" href="/admin/product-quotes/<%= q._id %>">View</a>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="list-group-item">No product quote requests yet.</li>
-          <% } %>
-        </ul>
-        <div class="mt-2">
-          <a href="/admin/product-quotes" class="btn btn-sm btn-outline-secondary">View All Quotes</a>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Product</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Size</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentInquiries && recentInquiries.length) { %>
+                <% recentInquiries.forEach(inq => { %>
+                  <tr class="<%= !inq.isRead ? 'table-warning' : '' %>">
+                    <td><%= new Date(inq.createdAt).toLocaleDateString() %></td>
+                    <td>
+                      <span class="badge bg-<%= inq.type === 'product' ? 'primary' : 'info' %>">
+                        <%= inq.type %>
+                      </span>
+                    </td>
+                    <td><%= inq.productName || '-' %></td>
+                    <td><strong><%= inq.name %></strong></td>
+                    <td><%= inq.email %></td>
+                    <td><%= inq.phone %></td>
+                    <td><%= inq.size || '-' %></td>
+                    <td>
+                      <%= inq.description ? (inq.description.length > 50 ? inq.description.substring(0, 50) + '...' : inq.description) : '-' %>
+                    </td>
+                    <td>
+                      <a href="/admin/inquiries/<%= inq._id %>" class="btn btn-sm btn-outline-primary">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="9" class="text-center text-muted">No inquiries yet.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
 </div>
+
 <div class="row g-4 mt-2">
   <div class="col-md-12">
     <div class="card">
       <div class="card-body">
-        <h2 class="h5">Top Pages</h2>
-        <ul class="list-group list-group-flush">
-          <% if (stats.topPages && stats.topPages.length) { %>
-            <% stats.topPages.forEach(p => { %>
-              <li class="list-group-item d-flex justify-content-between">
-                <span><%= p._id %></span>
-                <span class="badge bg-secondary"><%= p.count %></span>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="list-group-item">No data yet.</li>
-          <% } %>
-        </ul>
+        <h2 class="h5">Quick Links</h2>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/admin/products/new" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle"></i> Add Product
+          </a>
+          <a href="/admin/projects/new" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle"></i> Add Project
+          </a>
+          <a href="/admin/services/new" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle"></i> Add Service
+          </a>
+          <a href="/admin/settings" class="btn btn-outline-primary">
+            <i class="bi bi-gear"></i> Settings
+          </a>
+          <a href="/admin/media" class="btn btn-outline-primary">
+            <i class="bi bi-images"></i> Media Upload
+          </a>
+        </div>
       </div>
     </div>
   </div>
 </div>
-<%- include('../partials/footer', { settings }) %>
 
-
+<%- include('../partials/admin-footer') %>

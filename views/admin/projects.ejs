@@ -1,6 +1,6 @@
-<%- include('../partials/header', { title: 'Projects', settings }) %>
+<%- include('../partials/admin-header', { title: 'Projects', currentPage: 'projects' }) %>
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0">Projects</h1>
+  <h2 class="h4 mb-0">Projects</h2>
   <a href="/admin/projects/new" class="btn btn-primary">New Project</a>
 </div>
 <form class="row g-2 mb-3">
@@ -64,6 +64,6 @@
     </tbody>
   </table>
   </div>
-<%- include('../partials/footer', { settings }) %>
+<%- include('../partials/admin-footer') %>
 
 

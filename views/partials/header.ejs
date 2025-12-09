@@ -59,12 +59,28 @@
           <% 
             // Handle both siteSettings (public) and settings (admin) variable names
             const siteConfig = typeof siteSettings !== 'undefined' ? siteSettings : (typeof settings !== 'undefined' ? settings : null);
-            const logo = siteConfig && siteConfig.logo ? siteConfig.logo : '';
             const companyName = siteConfig && siteConfig.companyName ? siteConfig.companyName : 'Goodfella Pools';
             const headerTextColor = siteConfig && siteConfig.theme && siteConfig.theme.header ? siteConfig.theme.header.textColor : '#0d6efd';
+            
+            // Get navbar logo - prefer navbarLogo (Media ref), fallback to old logo (string path)
+            let logoUrl = '';
+            if (siteConfig && siteConfig.navbarLogo) {
+              // navbarLogo is a populated Media object
+              if (typeof siteConfig.navbarLogo === 'object' && siteConfig.navbarLogo.sizes) {
+                logoUrl = siteConfig.navbarLogo.sizes.medium?.url || 
+                         siteConfig.navbarLogo.sizes.large?.url || 
+                         siteConfig.navbarLogo.sizes.thumbnail?.url || '';
+                if (logoUrl) {
+                  logoUrl = '/public/' + logoUrl;
+                }
+              }
+            } else if (siteConfig && siteConfig.logo) {
+              // Fallback to old logo string path
+              logoUrl = siteConfig.logo;
+            }
           %>
-          <% if (logo) { %>
-            <img src="<%= logo %>" alt="<%= companyName %>" style="height: 40px; max-width: 200px; object-fit: contain; margin-right: 10px;">
+          <% if (logoUrl) { %>
+            <img src="<%= logoUrl %>" alt="<%= companyName %>" style="height: 40px; max-width: 200px; object-fit: contain; margin-right: 10px;">
           <% } %>
           <span class="fw-bold" style="color: <%= headerTextColor %>;">
             <%= companyName %>

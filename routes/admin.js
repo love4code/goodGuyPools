@@ -10,6 +10,7 @@ const { upload, processImage } = require('../middleware/upload');
 const serviceController = require('../controllers/serviceController');
 const productController = require('../controllers/productController');
 const productQuoteController = require('../controllers/productQuoteController');
+const inquiryController = require('../controllers/inquiryController');
 
 // Auth
 router.get('/login', adminController.getLogin);
@@ -101,10 +102,18 @@ router.get('/settings', requireAuth, settingsController.getSettings);
 router.post(
   '/settings',
   requireAuth,
-  upload.fields([
-    { name: 'faviconUpload', maxCount: 1 },
-    { name: 'logoUpload', maxCount: 1 },
-  ]),
+  (req, res, next) => {
+    upload.fields([
+      { name: 'faviconUpload', maxCount: 1 },
+      { name: 'logoUpload', maxCount: 1 },
+    ])(req, res, (err) => {
+      // Ignore unexpected field errors for non-file fields
+      if (err && err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return next();
+      }
+      next(err);
+    });
+  },
   require('../middleware/upload').processImages,
   settingsController.updateSettings,
 );
@@ -142,5 +151,10 @@ router.post(
   productController.update,
 );
 router.post('/products/:id/delete', requireAuth, productController.remove);
+
+// Inquiries
+router.get('/inquiries', requireAuth, inquiryController.list);
+router.get('/inquiries/:id', requireAuth, inquiryController.detail);
+router.post('/inquiries/:id/delete', requireAuth, inquiryController.remove);
 
 module.exports = router;

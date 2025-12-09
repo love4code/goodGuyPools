@@ -5,7 +5,10 @@ const Service = require('../models/Service');
 const { sendContactEmail } = require('../utils/email');
 
 async function getSettings () {
-  const settings = await SiteSettings.findOne();
+  const settings = await SiteSettings.findOne()
+    .populate('navbarLogo')
+    .populate('heroLogo')
+    .populate('heroBackgroundImage');
   return (
     settings || {
       companyName: 'Good Guy Pools',
@@ -21,6 +24,7 @@ exports.getHome = async (req, res) => {
     const siteSettings = await getSettings();
     const services = await Service.find().sort({ order: 1, createdAt: 1 });
     const projects = await Project.find({ isFeatured: true })
+      .populate('images')
       .sort({ createdAt: -1 })
       .limit(8);
     res.render('index', {
@@ -57,6 +61,7 @@ exports.getPortfolio = async (req, res) => {
   const perPage = 12;
   const total = await Project.countDocuments(filter);
   const projects = await Project.find(filter)
+    .populate('images')
     .sort({ createdAt: -1 })
     .skip((page - 1) * perPage)
     .limit(perPage);
@@ -74,7 +79,9 @@ exports.getPortfolio = async (req, res) => {
 
 exports.getProjectDetail = async (req, res) => {
   const siteSettings = await getSettings();
-  const project = await Project.findOne({ slug: req.params.slug });
+  const project = await Project.findOne({ slug: req.params.slug }).populate(
+    'images',
+  );
   if (!project)
     return res
       .status(404)

@@ -21,13 +21,26 @@
     <% projects.forEach(p => { %>
       <div class="col-md-4">
         <div class="card h-100">
-          <% if (p.featuredImage) { %>
-            <img src="<%= p.featuredImage %>" class="card-img-top" alt="<%= p.title %>">
+          <% 
+            let projectImgUrl = '';
+            if (p.images && p.images.length > 0) {
+              if (typeof p.images[0] === 'object' && p.images[0].sizes) {
+                projectImgUrl = '/public/' + (p.images[0].sizes.medium?.url || p.images[0].sizes.large?.url || p.images[0].sizes.thumbnail?.url || '');
+              } else if (typeof p.images[0] === 'string') {
+                projectImgUrl = p.images[0];
+              }
+            } else if (p.featuredImage) {
+              projectImgUrl = p.featuredImage;
+            }
+          %>
+          <% if (projectImgUrl) { %>
+            <img src="<%= projectImgUrl %>" class="card-img-top" alt="<%= p.title %>" style="height: 200px; object-fit: cover;">
           <% } %>
           <div class="card-body d-flex flex-column">
             <h3 class="h5"><%= p.title %></h3>
-            <div class="text-muted small mb-2"><%= p.location || '' %> · <%= p.projectType %></div>
-            <% if (p.shortDescription) { %>
+            <% if (p.summary) { %>
+              <p class="card-text flex-grow-1"><%= p.summary %></p>
+            <% } else if (p.shortDescription) { %>
               <p class="card-text flex-grow-1"><%= p.shortDescription %></p>
             <% } %>
             <a href="/portfolio/<%= p.slug %>" class="btn btn-sm btn-primary mt-auto">View Project</a>

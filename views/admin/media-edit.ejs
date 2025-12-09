@@ -1,12 +1,20 @@
-<%- include('../partials/header', { title: 'Edit Media', siteSettings }) %>
+<%- include('../partials/admin-header', { title: 'Edit Media', currentPage: 'media' }) %>
 <div class="row">
   <div class="col-lg-8 mx-auto">
     <div class="card">
       <div class="card-body">
-        <h1 class="h5 mb-3">Edit Media</h1>
+        <h2 class="h5 mb-3">Edit Media</h2>
         <div class="mb-3">
-          <img src="<%= media.filePath %>" class="img-fluid rounded" alt="<%= media.altText || media.title %>">
-          <div class="text-muted small mt-2"><%= media.originalFilename %> · <code><%= media.filePath %></code></div>
+          <% 
+            let mediaImgUrl = '/public/' + (media.sizes?.large?.url || media.sizes?.medium?.url || media.sizes?.thumbnail?.url || '');
+          %>
+          <img src="<%= mediaImgUrl %>" class="img-fluid rounded" alt="<%= media.altText || media.title || media.originalFilename %>">
+          <div class="text-muted small mt-2">
+            <%= media.originalFilename %>
+            <% if (media.sizes?.large) { %>
+              · Large: <%= media.sizes.large.width %>x<%= media.sizes.large.height %> (<%= media.sizes.large.sizeInKb %>KB)
+            <% } %>
+          </div>
         </div>
         <form action="/admin/media/<%= media._id %>" method="POST" class="vstack gap-3">
           <div>
@@ -30,6 +38,6 @@
     </div>
   </div>
 </div>
-<%- include('../partials/footer', { siteSettings }) %>
+<%- include('../partials/admin-footer') %>
 
 

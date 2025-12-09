@@ -1,34 +1,70 @@
 <%- include('partials/header', { title: 'Home', siteSettings }) %>
 
-<% if (siteSettings && siteSettings.hero && siteSettings.hero.enabled && siteSettings.hero.image) { %>
-  <!-- Hero Section with Image -->
+<% 
+  // Get hero background image URL
+  let heroBgImageUrl = '';
+  if (siteSettings && siteSettings.heroBackgroundMode === 'image' && siteSettings.heroBackgroundImage) {
+    if (typeof siteSettings.heroBackgroundImage === 'object' && siteSettings.heroBackgroundImage.sizes) {
+      heroBgImageUrl = siteSettings.heroBackgroundImage.sizes.large?.url || 
+                      siteSettings.heroBackgroundImage.sizes.medium?.url || 
+                      siteSettings.heroBackgroundImage.sizes.thumbnail?.url || '';
+      if (heroBgImageUrl) heroBgImageUrl = '/public/' + heroBgImageUrl;
+    }
+  }
+  
+  // Get hero logo URL
+  let heroLogoUrl = '';
+  if (siteSettings && siteSettings.heroLogo) {
+    if (typeof siteSettings.heroLogo === 'object' && siteSettings.heroLogo.sizes) {
+      heroLogoUrl = siteSettings.heroLogo.sizes.medium?.url || 
+                   siteSettings.heroLogo.sizes.large?.url || 
+                   siteSettings.heroLogo.sizes.thumbnail?.url || '';
+      if (heroLogoUrl) heroLogoUrl = '/public/' + heroLogoUrl;
+    }
+  }
+%>
+
+<% if (siteSettings && siteSettings.heroBackgroundMode === 'image' && heroBgImageUrl) { %>
+  <!-- Hero Section with Image Background -->
   <section class="mb-5 position-relative" style="min-height: 500px; overflow: hidden;">
-    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-image: url('<%= siteSettings.hero.image %>'); background-size: cover; background-position: center; z-index: 0;"></div>
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background-image: url('<%= heroBgImageUrl %>'); background-size: cover; background-position: center; z-index: 0;"></div>
     <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)); z-index: 1;"></div>
     <div class="position-relative" style="z-index: 2; min-height: 500px; display: flex; align-items: center;">
       <div class="container">
         <div class="row">
           <div class="col-lg-8 mx-auto text-center text-white" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">
-            <% if (siteSettings.hero.title) { %>
-              <h1 class="display-4 fw-bold mb-4"><%= siteSettings.hero.title %></h1>
+            <% if (heroLogoUrl) { %>
+              <div class="mb-4">
+                <img src="<%= heroLogoUrl %>" alt="<%= siteSettings.companyName || 'Logo' %>" style="max-height: 120px; max-width: 300px; object-fit: contain;">
+              </div>
             <% } %>
-            <% if (siteSettings.hero.subtitle) { %>
-              <p class="lead mb-4 fs-4"><%= siteSettings.hero.subtitle %></p>
+            <% if (siteSettings.tagline) { %>
+              <h1 class="display-4 fw-bold mb-4"><%= siteSettings.tagline %></h1>
             <% } %>
-            <% if (siteSettings.hero.buttonText && siteSettings.hero.buttonLink) { %>
-              <a class="btn btn-primary btn-lg shadow" href="<%= siteSettings.hero.buttonLink %>"><%= siteSettings.hero.buttonText %></a>
+            <% if (siteSettings.companyName && !siteSettings.tagline) { %>
+              <h1 class="display-4 fw-bold mb-4"><%= siteSettings.companyName %></h1>
             <% } %>
+            <a class="btn btn-primary btn-lg shadow" href="/contact">Request a Free Quote</a>
           </div>
         </div>
       </div>
     </div>
   </section>
 <% } else { %>
-  <!-- Default Home Page Section (when hero is disabled) -->
+  <!-- Default Home Page Section (when hero is color mode or no image) -->
   <section class="mb-5">
     <div class="p-5 bg-light rounded-3 text-center">
-      <h1 class="display-5 fw-bold text-primary">Good Guy Pools</h1>
-      <p class="lead mb-4">Custom Swimming Pools & Outdoor Living</p>
+      <% if (heroLogoUrl) { %>
+        <div class="mb-4">
+          <img src="<%= heroLogoUrl %>" alt="<%= siteSettings.companyName || 'Logo' %>" style="max-height: 120px; max-width: 300px; object-fit: contain;">
+        </div>
+      <% } %>
+      <h1 class="display-5 fw-bold text-primary"><%= siteSettings.companyName || 'Good Guy Pools' %></h1>
+      <% if (siteSettings.tagline) { %>
+        <p class="lead mb-4"><%= siteSettings.tagline %></p>
+      <% } else { %>
+        <p class="lead mb-4">Custom Swimming Pools & Outdoor Living</p>
+      <% } %>
       <a class="btn btn-primary btn-lg" href="/contact">Request a Free Quote</a>
     </div>
   </section>
@@ -37,26 +73,32 @@
 <section class="mb-5">
   <h2 class="h3 mb-4">Our Services</h2>
   <div class="row g-4">
-    <% if (services && services.length) { %> <% services.forEach(s => { %>
-    <div class="col-md-3">
-      <div class="card h-100 text-center">
-        <div class="card-body d-flex flex-column">
-          <% if (s.icon) { %>
-            <div class="mb-3">
-              <i class="bi <%= s.icon %>" style="font-size: 3rem; color: #0d6efd;"></i>
+    <% if (services && services.length) { %> 
+      <% services.forEach(s => { %>
+        <div class="col-md-3">
+          <div class="card h-100 text-center">
+            <div class="card-body d-flex flex-column">
+              <% if (s.icon) { %>
+                <div class="mb-3">
+                  <i class="bi <%= s.icon %>" style="font-size: 3rem; color: #0d6efd;"></i>
+                </div>
+              <% } %>
+              <h3 class="h5 mb-3"><%= s.name || s.title %></h3>
+              <% if (s.shortDescription) { %>
+                <p class="card-text flex-grow-1"><%= s.shortDescription %></p>
+              <% } else if (s.description) { %>
+                <p class="card-text flex-grow-1"><%= s.description %></p>
+              <% } %>
             </div>
-          <% } %>
-          <h3 class="h5 mb-3"><%= s.title %></h3>
-          <p class="card-text flex-grow-1"><%= s.description %></p>
+          </div>
+        </div>
+      <% }) %> 
+    <% } else { %>
+      <div class="col-12">
+        <div class="alert alert-secondary">
+          No services yet. Add some in Admin → Services.
         </div>
       </div>
-    </div>
-    <% }) %> <% } else { %>
-    <div class="col-12">
-      <div class="alert alert-secondary">
-        No services yet. Add some in Admin → Services.
-      </div>
-    </div>
     <% } %>
   </div>
 </section>
@@ -71,9 +113,22 @@
       <% projects.forEach(p => { %>
         <div class="col-lg-3 col-md-6">
           <div class="card h-100">
-            <% if (p.featuredImage) { %>
+            <% 
+              let projectImageUrl = '';
+              if (p.images && p.images.length > 0) {
+                // If images is populated Media objects
+                if (typeof p.images[0] === 'object' && p.images[0].sizes) {
+                  projectImageUrl = '/public/' + (p.images[0].sizes.medium?.url || p.images[0].sizes.large?.url || p.images[0].sizes.thumbnail?.url || '');
+                } else if (typeof p.images[0] === 'string') {
+                  projectImageUrl = p.images[0];
+                }
+              } else if (p.featuredImage) {
+                projectImageUrl = p.featuredImage;
+              }
+            %>
+            <% if (projectImageUrl) { %>
               <img
-                src="<%= p.featuredImage %>"
+                src="<%= projectImageUrl %>"
                 class="card-img-top"
                 alt="<%= p.title %>"
                 style="height: 200px; object-fit: cover;"
@@ -81,10 +136,9 @@
             <% } %>
             <div class="card-body d-flex flex-column">
               <h3 class="h5"><%= p.title %></h3>
-              <div class="text-muted small mb-2">
-                <%= p.location || '' %> · <%= p.projectType %>
-              </div>
-              <% if (p.shortDescription) { %>
+              <% if (p.summary) { %>
+                <p class="card-text flex-grow-1"><%= p.summary %></p>
+              <% } else if (p.shortDescription) { %>
                 <p class="card-text flex-grow-1"><%= p.shortDescription %></p>
               <% } %>
               <a href="/portfolio/<%= p.slug %>" class="btn btn-sm btn-primary mt-auto">View Project</a>

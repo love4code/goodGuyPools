@@ -1,6 +1,8 @@
 const Product = require('../models/Product');
 const Media = require('../models/Media');
 const ProductQuote = require('../models/ProductQuote');
+const Inquiry = require('../models/Inquiry');
+const mongoose = require('mongoose');
 
 // Admin Controllers
 exports.list = async (req, res) => {
@@ -131,9 +133,10 @@ exports.create = async (req, res) => {
       name,
       description: description || '',
       shortDescription: shortDescription || '',
-      image: featuredImagePath || image || '',
-      gallery: allGalleryPaths,
+      mainImage: mainImageId,
+      gallery: allGalleryIds,
       sizes: sizesArray,
+      price: req.body.price || '',
       sku: sku || '',
       category: category || '',
       brand: brand || '',
@@ -167,7 +170,9 @@ exports.create = async (req, res) => {
 };
 
 exports.editForm = async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id)
+    .populate('mainImage')
+    .populate('gallery');
   if (!product) {
     req.flash('error', 'Product not found');
     return res.redirect('/admin/products');
@@ -177,62 +182,82 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      req.flash('error', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+
     // Process uploaded featured image (single file)
-    let featuredImagePath = req.body.image || '';
+    let mainImageId = product.mainImage || null;
     if (
       req.files &&
       req.files.featuredImageUpload &&
       req.files.featuredImageUpload.length > 0
     ) {
       const featuredFile = req.files.featuredImageUpload[0];
-      if (featuredFile && featuredFile.path) {
+      if (featuredFile && featuredFile.mediaId) {
         await Media.create({
-          gridfsId: featuredFile.gridfsId,
-          filePath: featuredFile.path,
+          _id: featuredFile.mediaId,
           originalFilename: featuredFile.originalname,
           title: req.body.name || '',
           altText: '',
           tags: ['product', 'featured'],
           sizes: featuredFile.sizes || {},
         });
-        featuredImagePath = featuredFile.path;
+        mainImageId = featuredFile.mediaId;
       }
+    } else if (req.body.mainImage && req.body.mainImage.trim() !== '') {
+      // From media picker
+      if (mongoose.Types.ObjectId.isValid(req.body.mainImage.trim())) {
+        mainImageId = req.body.mainImage.trim();
+      }
+    } else if (req.body.mainImage === '') {
+      // Clear main image if empty string
+      mainImageId = null;
     }
 
     // Process uploaded gallery images
-    const uploadedGalleryPaths = [];
+    const uploadedGalleryIds = [];
     if (
       req.files &&
       req.files.galleryImages &&
       req.files.galleryImages.length > 0
     ) {
       for (const file of req.files.galleryImages) {
-        if (file.path) {
+        if (file.mediaId) {
           // Save to Media library
           await Media.create({
-            gridfsId: file.gridfsId,
-            filePath: file.path,
+            _id: file.mediaId,
             originalFilename: file.originalname,
             title: req.body.name || '',
             altText: '',
             tags: ['product'],
             sizes: file.sizes || {},
           });
-          uploadedGalleryPaths.push(file.path);
+          uploadedGalleryIds.push(file.mediaId);
         }
       }
     }
 
-    // Combine uploaded images with manually entered paths
-    const manualGallery = Array.isArray(req.body.gallery)
-      ? req.body.gallery
-      : req.body.gallery
-      ? req.body.gallery
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-      : [];
-    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+    // Process gallery from media picker (comma-separated Media IDs)
+    const manualGalleryIds = [];
+    if (req.body.gallery && req.body.gallery.trim() !== '') {
+      const galleryIds = req.body.gallery
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of galleryIds) {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          manualGalleryIds.push(id);
+        }
+      }
+    }
+    const allGalleryIds = [
+      ...(product.gallery || []),
+      ...uploadedGalleryIds,
+      ...manualGalleryIds,
+    ];
 
     const {
       name,
@@ -294,9 +319,10 @@ exports.update = async (req, res) => {
       name,
       description: description || '',
       shortDescription: shortDescription || '',
-      image: featuredImagePath || image || '',
-      gallery: allGalleryPaths,
+      mainImage: mainImageId,
+      gallery: allGalleryIds,
       sizes: sizesArray,
+      price: req.body.price || '',
       sku: sku || '',
       category: category || '',
       brand: brand || '',
@@ -341,18 +367,26 @@ exports.remove = async (req, res) => {
 
 // Public Controllers
 exports.publicList = async (req, res) => {
-  const products = await Product.find({ isActive: true }).sort({
-    order: 1,
-    createdAt: -1,
+  const products = await Product.find({ isActive: true })
+    .populate('mainImage')
+    .sort({
+      order: 1,
+      createdAt: -1,
+    });
+  res.render('products', {
+    title: 'Products',
+    products,
+    siteSettings: res.locals.siteSettings,
   });
-  res.render('products', { title: 'Products', products });
 };
 
 exports.publicDetail = async (req, res) => {
   const product = await Product.findOne({
     slug: req.params.slug,
     isActive: true,
-  });
+  })
+    .populate('mainImage')
+    .populate('gallery');
   if (!product) {
     return res
       .status(404)
@@ -365,13 +399,13 @@ exports.publicDetail = async (req, res) => {
     product,
     success,
     error,
+    siteSettings: res.locals.siteSettings,
   });
 };
 
 exports.requestQuote = async (req, res) => {
   try {
-    const { name, city, email, phone, message, serviceType, selectedSizes } =
-      req.body;
+    const { name, email, phone, size, description } = req.body;
     const product = await Product.findById(req.body.productId);
 
     if (!product) {
@@ -379,56 +413,50 @@ exports.requestQuote = async (req, res) => {
       return res.redirect('/products');
     }
 
-    // Parse selectedSizes if it's a JSON string
-    let sizesArray = [];
-    if (selectedSizes) {
-      try {
-        sizesArray = JSON.parse(selectedSizes);
-      } catch (e) {
-        // If not JSON, treat as array or single value
-        sizesArray = Array.isArray(selectedSizes)
-          ? selectedSizes
-          : [selectedSizes];
-      }
+    if (!name || !email || !phone) {
+      req.flash('error', 'Please fill in all required fields');
+      return res.redirect(`/products/${product.slug}`);
     }
 
-    // Save quote request to database
-    await ProductQuote.create({
+    // Save inquiry to database
+    await Inquiry.create({
+      type: 'product',
+      product: product._id,
+      productName: product.name,
       name,
-      city,
       email,
       phone,
-      message: message || '',
-      serviceType,
-      selectedSizes: sizesArray,
-      productId: product._id,
-      productName: product.name,
-      isRead: false,
+      size: size || '',
+      description: description || '',
     });
 
     // Send email
-    const { sendQuoteRequestEmail } = require('../utils/email');
-    await sendQuoteRequestEmail({
-      name,
-      city,
-      email,
-      phone,
-      message,
-      serviceType,
-      selectedSizes: sizesArray,
-      productName: product.name,
-    });
+    const { sendEmail } = require('../utils/email');
+    const emailSubject = `New Product Inquiry: ${product.name}`;
+    const emailBody = `
+      <h2>New Product Inquiry</h2>
+      <p><strong>Product:</strong> ${product.name}</p>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      ${size ? `<p><strong>Size:</strong> ${size}</p>` : ''}
+      ${description ? `<p><strong>Message:</strong><br>${description}</p>` : ''}
+    `;
 
-    req.flash(
-      'success',
-      'Thank you! Your quote request has been submitted. We will contact you soon.',
-    );
+    try {
+      await sendEmail({
+        to: process.env.SITE_EMAIL,
+        subject: emailSubject,
+        html: emailBody,
+      });
+    } catch (emailErr) {
+      console.error('Error sending inquiry email:', emailErr);
+    }
+
+    req.flash('success', 'Thank you! We will contact you soon.');
     res.redirect(`/products/${product.slug}`);
   } catch (e) {
-    req.flash(
-      'error',
-      'There was an error submitting your request. Please try again.',
-    );
+    req.flash('error', e.message || 'Error submitting inquiry');
     res.redirect(`/products/${req.body.productSlug || ''}`);
   }
 };

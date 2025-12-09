@@ -1,5 +1,4 @@
-<%- include('../partials/header', { title: 'Site Settings', settings }) %>
-<h1 class="h4 mb-3">Site Settings</h1>
+<%- include('../partials/admin-header', { title: 'Site Settings', currentPage: 'settings' }) %>
 <form action="/admin/settings" method="POST" enctype="multipart/form-data" class="row g-3">
   <div class="col-md-6">
     <label class="form-label">Company Name</label>
@@ -52,8 +51,8 @@
   <div class="col-md-12">
     <label class="form-label">Favicon</label>
     <div class="input-group mb-2">
-      <input type="text" name="favicon" id="favicon" class="form-control" placeholder="/api/images/..." value="<%= settings.favicon || '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('favicon')">Select from Media Library</button>
+      <input type="text" name="favicon" id="favicon" class="form-control" placeholder="Media ID or path" value="<%= settings.favicon || '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: false, callback: async function(id) { document.getElementById('favicon').value = id; await updateMediaPreview(id, document.getElementById('favicon').closest('.col-md-12'), 'thumbnail'); }})">Select from Media Library</button>
     </div>
     <input type="file" name="faviconUpload" id="faviconUpload" class="form-control" accept="image/x-icon,image/png,image/jpeg,image/gif">
     <small class="text-muted">Upload a new favicon (.ico, .png, .jpg, .gif) or select from media library</small>
@@ -64,16 +63,27 @@
     <% } %>
   </div>
   <div class="col-md-12">
-    <label class="form-label">Logo</label>
+    <label class="form-label">Navbar Logo</label>
     <div class="input-group mb-2">
-      <input type="text" name="logo" id="logo" class="form-control" placeholder="/api/images/..." value="<%= settings.logo || '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('logo')">Select from Media Library</button>
+      <input type="text" name="logo" id="logo" class="form-control" placeholder="Media ID" value="<%= settings.navbarLogo ? (typeof settings.navbarLogo === 'object' ? settings.navbarLogo._id.toString() : settings.navbarLogo.toString()) : (settings.logo || '') %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: false, callback: async function(id) { document.getElementById('logo').value = id; await updateMediaPreview(id, document.getElementById('logo').closest('.col-md-12'), 'medium'); }})">Select from Media Library</button>
     </div>
     <input type="file" name="logoUpload" id="logoUpload" class="form-control" accept="image/png,image/jpeg,image/jpg,image/gif,image/svg+xml">
-    <small class="text-muted">Upload a new logo (.png, .jpg, .gif, .svg) or select from media library. Recommended height: 40-60px</small>
-    <% if (settings.logo) { %>
+    <small class="text-muted">Upload a new logo (.png, .jpg, .gif, .svg) or select from media library. Recommended height: 40-60px. This logo will appear in the navbar.</small>
+    <% 
+      let logoPreviewUrl = '';
+      if (settings.navbarLogo) {
+        if (typeof settings.navbarLogo === 'object' && settings.navbarLogo.sizes) {
+          logoPreviewUrl = settings.navbarLogo.sizes.medium?.url || settings.navbarLogo.sizes.large?.url || settings.navbarLogo.sizes.thumbnail?.url || '';
+          if (logoPreviewUrl) logoPreviewUrl = '/public/' + logoPreviewUrl;
+        }
+      } else if (settings.logo) {
+        logoPreviewUrl = settings.logo;
+      }
+    %>
+    <% if (logoPreviewUrl) { %>
       <div class="mt-2">
-        <img src="<%= settings.logo %>" alt="Logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">
+        <img src="<%= logoPreviewUrl %>" alt="Logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">
       </div>
     <% } %>
   </div>
@@ -90,49 +100,58 @@
   </div>
 
   <div class="col-md-12">
-    <div class="form-check mb-3">
-      <input type="checkbox" name="heroEnabled" id="heroEnabled" class="form-check-input" <%= settings.hero && settings.hero.enabled ? 'checked' : '' %>>
-      <label class="form-check-label" for="heroEnabled">
-        Enable Hero Section
-      </label>
-    </div>
+    <label class="form-label">Hero Background Mode</label>
+    <select name="heroBackgroundMode" class="form-select">
+      <option value="color" <%= settings.heroBackgroundMode === 'color' ? 'selected' : '' %>>Color</option>
+      <option value="image" <%= settings.heroBackgroundMode === 'image' ? 'selected' : '' %>>Image</option>
+    </select>
+    <small class="text-muted">Choose whether to use a color or image background for the hero section</small>
   </div>
 
   <div class="col-md-12">
-    <label class="form-label">Hero Image</label>
+    <label class="form-label">Hero Background Image</label>
     <div class="input-group mb-2">
-      <input type="text" name="heroImage" id="heroImage" class="form-control" placeholder="/api/images/..." value="<%= settings.hero && settings.hero.image ? settings.hero.image : '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('heroImage')">Select from Media Library</button>
+      <input type="text" name="heroBackgroundImage" id="heroBackgroundImage" class="form-control" placeholder="Media ID" value="<%= settings.heroBackgroundImage ? (typeof settings.heroBackgroundImage === 'object' ? settings.heroBackgroundImage._id.toString() : settings.heroBackgroundImage.toString()) : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: false, callback: async function(id) { document.getElementById('heroBackgroundImage').value = id; await updateMediaPreview(id, document.getElementById('heroBackgroundImage').closest('.col-md-12'), 'large'); }})">Select from Media Library</button>
     </div>
-    <small class="text-muted">Select an image from your media library or enter an image path</small>
-    <% if (settings.hero && settings.hero.image) { %>
+    <small class="text-muted">Select an image from your media library (only used if Background Mode is "Image")</small>
+    <% 
+      let heroBgPreviewUrl = '';
+      if (settings.heroBackgroundImage) {
+        if (typeof settings.heroBackgroundImage === 'object' && settings.heroBackgroundImage.sizes) {
+          heroBgPreviewUrl = settings.heroBackgroundImage.sizes.large?.url || settings.heroBackgroundImage.sizes.medium?.url || settings.heroBackgroundImage.sizes.thumbnail?.url || '';
+          if (heroBgPreviewUrl) heroBgPreviewUrl = '/public/' + heroBgPreviewUrl;
+        }
+      }
+    %>
+    <% if (heroBgPreviewUrl) { %>
       <div class="mt-2">
-        <img src="<%= settings.hero.image %>" alt="Hero preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">
+        <img src="<%= heroBgPreviewUrl %>" alt="Hero background preview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;">
       </div>
     <% } %>
   </div>
 
   <div class="col-md-12">
-    <label class="form-label">Hero Title</label>
-    <input type="text" name="heroTitle" class="form-control" placeholder="e.g., Welcome to Good Guy Pools" value="<%= settings.hero && settings.hero.title ? settings.hero.title : '' %>">
-    <small class="text-muted">Main heading for the hero section</small>
-  </div>
-
-  <div class="col-md-12">
-    <label class="form-label">Hero Subtitle</label>
-    <input type="text" name="heroSubtitle" class="form-control" placeholder="e.g., Custom Swimming Pools & Outdoor Living" value="<%= settings.hero && settings.hero.subtitle ? settings.hero.subtitle : '' %>">
-    <small class="text-muted">Subheading or tagline for the hero section</small>
-  </div>
-
-  <div class="col-md-6">
-    <label class="form-label">Button Text</label>
-    <input type="text" name="heroButtonText" class="form-control" placeholder="e.g., Request a Free Quote" value="<%= settings.hero && settings.hero.buttonText ? settings.hero.buttonText : '' %>">
-  </div>
-
-  <div class="col-md-6">
-    <label class="form-label">Button Link</label>
-    <input type="text" name="heroButtonLink" class="form-control" placeholder="e.g., /contact" value="<%= settings.hero && settings.hero.buttonLink ? settings.hero.buttonLink : '' %>">
-    <small class="text-muted">URL path (e.g., /contact, /products, etc.)</small>
+    <label class="form-label">Hero Logo</label>
+    <div class="input-group mb-2">
+      <input type="text" name="heroLogo" id="heroLogo" class="form-control" placeholder="Media ID" value="<%= settings.heroLogo ? (typeof settings.heroLogo === 'object' ? settings.heroLogo._id.toString() : settings.heroLogo.toString()) : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: false, callback: async function(id) { document.getElementById('heroLogo').value = id; await updateMediaPreview(id, document.getElementById('heroLogo').closest('.col-md-12'), 'medium'); }})">Select from Media Library</button>
+    </div>
+    <small class="text-muted">Select a logo image (SVG recommended) for the hero section</small>
+    <% 
+      let heroLogoPreviewUrl = '';
+      if (settings.heroLogo) {
+        if (typeof settings.heroLogo === 'object' && settings.heroLogo.sizes) {
+          heroLogoPreviewUrl = settings.heroLogo.sizes.medium?.url || settings.heroLogo.sizes.large?.url || settings.heroLogo.sizes.thumbnail?.url || '';
+          if (heroLogoPreviewUrl) heroLogoPreviewUrl = '/public/' + heroLogoPreviewUrl;
+        }
+      }
+    %>
+    <% if (heroLogoPreviewUrl) { %>
+      <div class="mt-2">
+        <img src="<%= heroLogoPreviewUrl %>" alt="Hero logo preview" class="img-thumbnail" style="max-height: 60px; max-width: 200px; object-fit: contain;">
+      </div>
+    <% } %>
   </div>
 
   <!-- Theme Customization Section -->
@@ -143,19 +162,55 @@
   </div>
 
   <div class="col-md-12">
-    <label class="form-label">Theme Preset</label>
-    <select name="themePreset" id="themePreset" class="form-select" onchange="applyPreset()">
-      <option value="default" <%= settings.theme && settings.theme.preset === 'default' ? 'selected' : '' %>>Default (White)</option>
-      <option value="ocean-blue" <%= settings.theme && settings.theme.preset === 'ocean-blue' ? 'selected' : '' %>>Ocean Blue</option>
-      <option value="sky-blue" <%= settings.theme && settings.theme.preset === 'sky-blue' ? 'selected' : '' %>>Sky Blue</option>
-      <option value="navy-blue" <%= settings.theme && settings.theme.preset === 'navy-blue' ? 'selected' : '' %>>Navy Blue</option>
-      <option value="royal-blue" <%= settings.theme && settings.theme.preset === 'royal-blue' ? 'selected' : '' %>>Royal Blue</option>
-      <option value="dark" <%= settings.theme && settings.theme.preset === 'dark' ? 'selected' : '' %>>Dark Theme</option>
-      <option value="light" <%= settings.theme && settings.theme.preset === 'light' ? 'selected' : '' %>>Light Theme</option>
-      <option value="custom" <%= settings.theme && settings.theme.preset === 'custom' ? 'selected' : '' %>>Custom Colors</option>
+    <label class="form-label">Theme</label>
+    <select name="themeName" id="themeName" class="form-select">
+      <option value="waterBlue1" <%= settings.themeName === 'waterBlue1' ? 'selected' : '' %>>Water Blue 1</option>
+      <option value="waterBlue2" <%= settings.themeName === 'waterBlue2' ? 'selected' : '' %>>Water Blue 2</option>
+      <option value="aqua" <%= settings.themeName === 'aqua' ? 'selected' : '' %>>Aqua</option>
+      <option value="deepBlue" <%= settings.themeName === 'deepBlue' ? 'selected' : '' %>>Deep Blue</option>
+      <option value="tealWave" <%= settings.themeName === 'tealWave' ? 'selected' : '' %>>Teal Wave</option>
+      <option value="skyBlue" <%= settings.themeName === 'skyBlue' ? 'selected' : '' %>>Sky Blue</option>
+      <option value="custom" <%= settings.themeName === 'custom' ? 'selected' : '' %>>Custom Theme</option>
     </select>
-    <small class="text-muted">Select a preset theme or choose "Custom Colors" to set your own</small>
+    <small class="text-muted">Select a preset theme or choose "Custom Theme" to set your own colors</small>
   </div>
+
+  <div id="customThemeFields" style="display: <%= settings.themeName === 'custom' ? 'block' : 'none' %>;">
+    <div class="col-md-12">
+      <h6 class="mt-3 mb-2">Custom Theme Colors</h6>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Primary Color</label>
+      <input type="color" name="primaryColor" class="form-control form-control-color" value="<%= settings.customTheme && settings.customTheme.primaryColor ? settings.customTheme.primaryColor : '#0d6efd' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Secondary Color</label>
+      <input type="color" name="secondaryColor" class="form-control form-control-color" value="<%= settings.customTheme && settings.customTheme.secondaryColor ? settings.customTheme.secondaryColor : '#6c757d' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Accent Color</label>
+      <input type="color" name="accentColor" class="form-control form-control-color" value="<%= settings.customTheme && settings.customTheme.accentColor ? settings.customTheme.accentColor : '#0dcaf0' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Background Color</label>
+      <input type="color" name="backgroundColor" class="form-control form-control-color" value="<%= settings.customTheme && settings.customTheme.backgroundColor ? settings.customTheme.backgroundColor : '#ffffff' %>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Text Color</label>
+      <input type="color" name="textColor" class="form-control form-control-color" value="<%= settings.customTheme && settings.customTheme.textColor ? settings.customTheme.textColor : '#000000' %>">
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('themeName')?.addEventListener('change', function() {
+      const customFields = document.getElementById('customThemeFields');
+      if (this.value === 'custom') {
+        customFields.style.display = 'block';
+      } else {
+        customFields.style.display = 'none';
+      }
+    });
+  </script>
 
   <!-- Header Colors -->
   <div class="col-12">
@@ -464,6 +519,6 @@
     bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
   }
 </script>
-<%- include('../partials/footer', { settings }) %>
+<%- include('../partials/admin-footer') %>
 
 

@@ -24,11 +24,12 @@ construction company. Built with Node.js, Express, MongoDB, and Bootstrap 5.
 
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB with Mongoose ODM
-- **Storage**: GridFS for image storage
+- **Storage**: File system storage in `public/uploads/` with automatic image
+  optimization
 - **Templating**: EJS (Embedded JavaScript)
 - **Frontend**: Bootstrap 5, Bootstrap Icons
 - **Authentication**: Express Sessions, bcrypt
-- **File Upload**: Multer, Sharp (image processing)
+- **File Upload**: Multer, Sharp (image processing and resizing)
 - **Email**: Nodemailer
 - **Rich Text Editor**: Quill.js
 
@@ -47,17 +48,30 @@ construction company. Built with Node.js, Express, MongoDB, and Bootstrap 5.
 
 ### Admin Features
 
-- **Dashboard**: Analytics, recent inquiries, and statistics
+- **Dashboard**: Overview with counts for products, projects, services, media,
+  and inquiries. Recent inquiries list with quick links.
+- **Media Library**:
+  - Upload up to 20 images at a time with upload progress bars
+  - Automatic compression and resizing into 3 sizes (large ~1600px, medium
+    ~900px, thumbnail ~300px)
+  - Files stored in `public/uploads/{id}/` directory structure
+  - Reusable media picker modal component for selecting images
+- **Product Management**:
+  - Create/edit products with main image and gallery using media picker
+  - Size tags/pills input
+  - Product inquiry form on detail pages
 - **Project Management**: Create, edit, delete projects with rich text
+  descriptions and image galleries via media picker
+- **Services Management**: Manage services with Bootstrap Icons picker and short
   descriptions
-- **Product Management**: Comprehensive product catalog with metadata
-- **Media Library**: Upload and manage images with automatic resizing
-- **Contact Management**: View and manage contact inquiries
-- **Product Quote Management**: View and manage product quote requests
-- **Services Management**: Manage service offerings
-- **Site Settings**: Configure site-wide settings, SEO, and social links
-- **Theme Customization**: Customize header and footer colors with predefined
-  themes or custom colors
+- **Customer Inquiries**: Unified inquiry management for both product inquiries
+  and contact forms
+- **Site Settings**:
+  - Company information configuration
+  - Hero section with background mode (color/image), hero logo, and navbar logo
+  - Theme selection with 6 predefined water-color themes plus custom theme
+    option
+  - All image selections use media picker
 
 ## Getting Started
 
@@ -102,12 +116,14 @@ Create a `.env` file in the project root with the following variables:
 
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/goodfella_pools
+MONGO_URI=mongodb://localhost:27017/goodfella_pools
 # Or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name
+# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database_name
+# Note: MONGODB_URI is also supported for backwards compatibility
 
 # Server
 PORT=4000
+NODE_ENV=development
 
 # Session Secret (change this in production!)
 SESSION_SECRET=your-super-secret-session-key-change-in-production
@@ -117,8 +133,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password_or_smtp_password
-FROM_EMAIL=your_email@gmail.com
-CONTACT_RECEIVER=recipient@example.com
+SITE_EMAIL=recipient@example.com
 ```
 
 ### Gmail Setup (if using Gmail)
@@ -222,24 +237,27 @@ db.adminusers.insertOne({
 
 ## Image Upload System
 
-The application features an advanced image upload system with automatic resizing
-and compression.
+The application features an advanced image upload system with automatic
+resizing, compression, and file system storage.
 
 ### Image Sizes Generated
 
 When you upload an image, the system automatically creates three optimized
 versions:
 
-- **Thumbnail**: 300x300px (cover fit, WebP quality 80)
-- **Medium**: 800x800px (inside fit, WebP quality 85)
-- **Large**: 1920x1920px (inside fit, WebP quality 85)
+- **Thumbnail**: ~300px width max (WebP quality 80)
+- **Medium**: ~900px width max (WebP quality 85)
+- **Large**: ~1600px width max (WebP quality 85)
 
 ### Storage
 
-- Images are stored in MongoDB GridFS
-- All images are converted to WebP format (except GIFs, which are preserved)
-- Each size is stored separately with metadata
-- References to all sizes are stored in the Media model
+- Images are stored in `public/uploads/{mediaId}/` directory structure
+- All images are converted to WebP format (except GIFs and SVGs, which are
+  preserved)
+- Each size is stored as a separate file (e.g., `thumbnail.webp`, `medium.webp`,
+  `large.webp`)
+- File metadata (width, height, size in KB) is stored in MongoDB
+- Images are served directly from the file system via `/public/uploads/` route
 
 ### Using Image Sizes
 
@@ -247,24 +265,23 @@ In your views, you can access different image sizes:
 
 ```ejs
 <!-- Thumbnail -->
-<img src="<%= media.sizes.thumbnail.filePath %>" alt="...">
+<img src="/public/<%= media.sizes.thumbnail.url %>" alt="...">
 
 <!-- Medium -->
-<img src="<%= media.sizes.medium.filePath %>" alt="...">
+<img src="/public/<%= media.sizes.medium.url %>" alt="...">
 
-<!-- Large (default) -->
-<img src="<%= media.filePath %>" alt="...">
-<!-- or -->
-<img src="<%= media.sizes.large.filePath %>" alt="...">
+<!-- Large -->
+<img src="/public/<%= media.sizes.large.url %>" alt="...">
 ```
 
 ### Media Library
 
 - Access via Admin Panel → Media Library
-- Upload single or multiple images
+- Upload up to 20 images at a time with per-file progress bars
 - Images are automatically processed and stored
 - All sizes are generated automatically
-- Delete images to remove all sizes from GridFS
+- Reusable media picker component for selecting images in forms
+- Delete images to remove all files from the file system
 
 ## Using the Admin Panel
 
@@ -609,8 +626,9 @@ MongoDB shell.
 **3. Images Not Uploading**
 
 - Check file size limits (100MB max)
-- Verify GridFS is working (check MongoDB connection)
+- Verify `public/uploads/` directory exists and is writable
 - Ensure Sharp is installed correctly
+- Check file permissions
 
 **4. Email Not Sending**
 
@@ -636,7 +654,7 @@ MongoDB shell.
 
 If MongoDB connection fails:
 
-1. Verify `MONGODB_URI` is correct
+1. Verify `MONGO_URI` or `MONGODB_URI` is correct
 2. Check MongoDB is running (if local)
 3. Verify network access (if cloud)
 4. Check MongoDB credentials
@@ -646,9 +664,9 @@ If MongoDB connection fails:
 If images aren't processing:
 
 1. Verify Sharp is installed: `npm install sharp`
-2. Check file permissions
+2. Check file permissions for `public/uploads/` directory
 3. Ensure sufficient disk space
-4. Check GridFS bucket exists
+4. Verify the `public/uploads/` directory exists and is writable
 
 ## Scripts
 

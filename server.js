@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const { default: MongoStore } = require('connect-mongo');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
@@ -42,17 +44,32 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(methodOverride('_method'));
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'goodfella-secret-change-me',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24,
-    },
+
+// Session configuration with MongoDB store for persistence
+const mongoUri =
+  process.env.MONGO_URI ||
+  process.env.MONGODB_URI ||
+  'mongodb://localhost:27017/goodfella_pools';
+
+const sessionConfig = {
+  secret: process.env.SESSION_SECRET || 'goodfella-secret-change-me',
+  resave: false,
+  saveUninitialized: false,
+  rolling: true, // Extend session expiration on activity
+  store: MongoStore.create({
+    mongoUrl: mongoUri,
+    touchAfter: 24 * 3600, // Only update session once per day (in seconds)
+    ttl: 60 * 60 * 24 * 7, // 7 days in seconds
   }),
-);
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days for authenticated users
+  },
+};
+
+app.use(session(sessionConfig));
 app.use(flash());
 
 // Locals for views
@@ -66,7 +83,10 @@ app.use((req, res, next) => {
 // Load site settings for all views
 app.use(async (req, res, next) => {
   try {
-    const settings = await SiteSettings.findOne();
+    const settings = await SiteSettings.findOne()
+      .populate('navbarLogo')
+      .populate('heroLogo')
+      .populate('heroBackgroundImage');
     res.locals.siteSettings = settings || {
       companyName: 'Goodfella Pools',
       phone: '',

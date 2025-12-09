@@ -1,8 +1,12 @@
 const SiteSettings = require('../models/SiteSettings');
 const Media = require('../models/Media');
+const mongoose = require('mongoose');
 
 exports.getSettings = async (req, res) => {
-  let settings = await SiteSettings.findOne();
+  let settings = await SiteSettings.findOne()
+    .populate('navbarLogo')
+    .populate('heroLogo')
+    .populate('heroBackgroundImage');
   if (!settings) settings = await SiteSettings.create({});
   // Also pass as siteSettings for consistency with header partial
   res.render('admin/settings', {
@@ -30,76 +34,112 @@ exports.updateSettings = async (req, res) => {
   settings.seo.defaultMetaDescription = body.defaultMetaDescription || '';
   settings.seo.defaultOgImage = body.defaultOgImage || '';
 
-  // Favicon
+  // Favicon - can be a Media ID (from picker) or a path string (legacy)
   if (
     req.files &&
     req.files.faviconUpload &&
     req.files.faviconUpload[0] &&
-    req.files.faviconUpload[0].path
+    req.files.faviconUpload[0].mediaId
   ) {
     const faviconFile = req.files.faviconUpload[0];
     // Save to Media library
     await Media.create({
-      gridfsId: faviconFile.gridfsId,
-      filePath: faviconFile.path,
+      _id: faviconFile.mediaId,
       originalFilename: faviconFile.originalname,
       title: 'Favicon',
       altText: 'Site Favicon',
       tags: ['favicon'],
       sizes: faviconFile.sizes || {},
     });
-    settings.favicon = faviconFile.path;
-  } else if (body.favicon) {
-    settings.favicon = body.favicon;
+    // Store as path for favicon (since it's a string field, not Media ref)
+    settings.favicon = `/public/${faviconFile.path}`;
+  } else if (body.favicon && body.favicon.trim() !== '') {
+    // If it's a valid ObjectId, it's from media picker - get the path
+    if (mongoose.Types.ObjectId.isValid(body.favicon.trim())) {
+      const faviconMedia = await Media.findById(body.favicon.trim());
+      if (faviconMedia && faviconMedia.sizes) {
+        settings.favicon = `/public/${
+          faviconMedia.sizes.thumbnail?.url ||
+          faviconMedia.sizes.medium?.url ||
+          faviconMedia.sizes.large?.url ||
+          ''
+        }`;
+      }
+    } else {
+      // It's a path string (legacy)
+      settings.favicon = body.favicon.trim();
+    }
   }
+  // Don't clear favicon if not provided - keep existing value
 
-  // Logo
+  // Hero Background Image (Media reference)
+  if (body.heroBackgroundImage && body.heroBackgroundImage.trim() !== '') {
+    // Ensure it's a valid ObjectId string
+    if (mongoose.Types.ObjectId.isValid(body.heroBackgroundImage.trim())) {
+      settings.heroBackgroundImage = body.heroBackgroundImage.trim();
+    }
+    // If invalid, don't update - keep existing value
+  }
+  // Don't clear if not provided - keep existing value
+
+  // Hero Logo (Media reference)
+  if (body.heroLogo && body.heroLogo.trim() !== '') {
+    // Ensure it's a valid ObjectId string
+    if (mongoose.Types.ObjectId.isValid(body.heroLogo.trim())) {
+      settings.heroLogo = body.heroLogo.trim();
+    }
+    // If invalid, don't update - keep existing value
+  }
+  // Don't clear if not provided - keep existing value
+
+  // Navbar Logo (Media reference)
   if (
     req.files &&
     req.files.logoUpload &&
     req.files.logoUpload[0] &&
-    req.files.logoUpload[0].path
+    req.files.logoUpload[0].mediaId
   ) {
     const logoFile = req.files.logoUpload[0];
     // Save to Media library
     await Media.create({
-      gridfsId: logoFile.gridfsId,
-      filePath: logoFile.path,
+      _id: logoFile.mediaId,
       originalFilename: logoFile.originalname,
-      title: 'Logo',
+      title: 'Navbar Logo',
       altText: 'Site Logo',
       tags: ['logo'],
       sizes: logoFile.sizes || {},
     });
-    settings.logo = logoFile.path;
+    settings.navbarLogo = logoFile.mediaId;
   } else if (body.logo && body.logo.trim() !== '') {
-    settings.logo = body.logo.trim();
-  } else if (!body.logo || body.logo.trim() === '') {
-    // Keep existing logo if not provided
-    // Don't clear it unless explicitly cleared
+    // If logo field is provided (from media picker), use it as navbarLogo
+    if (mongoose.Types.ObjectId.isValid(body.logo.trim())) {
+      settings.navbarLogo = body.logo.trim();
+    }
+    // If invalid, don't update - keep existing value
+  } else if (body.navbarLogo && body.navbarLogo.trim() !== '') {
+    if (mongoose.Types.ObjectId.isValid(body.navbarLogo.trim())) {
+      settings.navbarLogo = body.navbarLogo.trim();
+    }
+    // If invalid, don't update - keep existing value
   }
+  // Don't clear if not provided - keep existing value
 
-  // Hero section settings
-  settings.hero.enabled = body.heroEnabled === 'on';
-  settings.hero.image = body.heroImage || '';
-  settings.hero.title = body.heroTitle || '';
-  settings.hero.subtitle = body.heroSubtitle || '';
-  settings.hero.buttonText = body.heroButtonText || '';
-  settings.hero.buttonLink = body.heroButtonLink || '';
+  // Hero configuration
+  settings.heroBackgroundMode = body.heroBackgroundMode || 'color';
 
   // Theme settings
-  settings.theme.preset = body.themePreset || 'default';
-  settings.theme.header.backgroundColor =
-    body.headerBackgroundColor || '#ffffff';
-  settings.theme.header.textColor = body.headerTextColor || '#0d6efd';
-  settings.theme.header.linkColor = body.headerLinkColor || '#000000';
-  settings.theme.header.linkHoverColor = body.headerLinkHoverColor || '#0d6efd';
-  settings.theme.footer.backgroundColor =
-    body.footerBackgroundColor || '#ffffff';
-  settings.theme.footer.textColor = body.footerTextColor || '#6c757d';
-  settings.theme.footer.linkColor = body.footerLinkColor || '#0d6efd';
-  settings.theme.footer.linkHoverColor = body.footerLinkHoverColor || '#0a58ca';
-  settings.theme.footer.borderColor = body.footerBorderColor || '#dee2e6';
+  settings.themeName = body.themeName || 'waterBlue1';
+
+  // Custom theme colors (only used if themeName === 'custom')
+  if (body.themeName === 'custom') {
+    settings.customTheme = {
+      primaryColor: body.primaryColor || '#0d6efd',
+      secondaryColor: body.secondaryColor || '#6c757d',
+      accentColor: body.accentColor || '#0dcaf0',
+      backgroundColor: body.backgroundColor || '#ffffff',
+      textColor: body.textColor || '#000000',
+    };
+  }
 
   settings.updatedAt = new Date();
   await settings.save();

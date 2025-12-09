@@ -29,8 +29,9 @@
             <% if (siteSettings.social.facebookUrl) { %><a class="me-3" href="<%= siteSettings.social.facebookUrl %>" target="_blank">Facebook</a><% } %>
             <% if (siteSettings.social.instagramUrl) { %><a class="me-3" href="<%= siteSettings.social.instagramUrl %>" target="_blank">Instagram</a><% } %>
             <% if (siteSettings.social.youtubeUrl) { %><a class="me-3" href="<%= siteSettings.social.youtubeUrl %>" target="_blank">YouTube</a><% } %>
-            <% if (siteSettings.social.tiktokUrl) { %><a href="<%= siteSettings.social.tiktokUrl %>" target="_blank">TikTok</a><% } %>
+            <% if (siteSettings.social.tiktokUrl) { %><a class="me-3" href="<%= siteSettings.social.tiktokUrl %>" target="_blank">TikTok</a><% } %>
           <% } %>
+          <a href="/admin/login">Login</a>
         </div>
         <div class="text-muted mt-3 mt-md-0">
           <div>&copy; <%= new Date().getFullYear() %> Goodfella Pools</div>

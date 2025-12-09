@@ -1,5 +1,6 @@
 const Media = require('../models/Media');
-const { deleteFromGridFS } = require('../utils/gridfs');
+const fs = require('fs').promises;
+const path = require('path');
 const mongoose = require('mongoose');
 
 exports.list = async (req, res) => {
@@ -23,13 +24,12 @@ exports.list = async (req, res) => {
 
 exports.upload = async (req, res) => {
   try {
-    if (!req.file || !req.file.gridfsId) {
+    if (!req.file || !req.file.mediaId) {
       req.flash('error', 'Please select an image to upload');
       return res.redirect('/admin/media');
     }
     await Media.create({
-      gridfsId: req.file.gridfsId,
-      filePath: req.file.path, // /api/images/{gridfsId}
+      _id: req.file.mediaId,
       originalFilename: req.file.originalname,
       title: req.body.title || '',
       altText: req.body.altText || '',
@@ -65,10 +65,9 @@ exports.uploadMultiple = async (req, res) => {
       : [];
 
     for (const f of req.files) {
-      if (!f.gridfsId) continue; // Skip if GridFS upload failed
+      if (!f.mediaId) continue; // Skip if upload failed
       await Media.create({
-        gridfsId: f.gridfsId,
-        filePath: f.path, // /api/images/{gridfsId}
+        _id: f.mediaId,
         originalFilename: f.originalname,
         title: titles || '',
         altText: altText || '',
@@ -91,32 +90,18 @@ exports.remove = async (req, res) => {
       req.flash('error', 'Not found');
       return res.redirect('/admin/media');
     }
-    // Delete all sizes from GridFS
-    if (media.gridfsId) {
-      await deleteFromGridFS(media.gridfsId);
-    }
-    if (media.sizes) {
-      if (
-        media.sizes.thumbnail &&
-        media.sizes.thumbnail.gridfsId &&
-        media.sizes.thumbnail.gridfsId.toString() !== media.gridfsId.toString()
-      ) {
-        await deleteFromGridFS(media.sizes.thumbnail.gridfsId);
-      }
-      if (
-        media.sizes.medium &&
-        media.sizes.medium.gridfsId &&
-        media.sizes.medium.gridfsId.toString() !== media.gridfsId.toString()
-      ) {
-        await deleteFromGridFS(media.sizes.medium.gridfsId);
-      }
-      if (
-        media.sizes.large &&
-        media.sizes.large.gridfsId &&
-        media.sizes.large.gridfsId.toString() !== media.gridfsId.toString()
-      ) {
-        await deleteFromGridFS(media.sizes.large.gridfsId);
-      }
+    // Delete all files from file system
+    const mediaDir = path.join(
+      __dirname,
+      '..',
+      'public',
+      'uploads',
+      req.params.id,
+    );
+    try {
+      await fs.rm(mediaDir, { recursive: true, force: true });
+    } catch (err) {
+      console.error('Error deleting media directory:', err);
     }
     await Media.findByIdAndDelete(req.params.id);
     req.flash('success', 'Deleted');
@@ -128,7 +113,17 @@ exports.remove = async (req, res) => {
 };
 
 exports.apiList = async (req, res) => {
-  const items = await Media.find().sort({ createdAt: -1 });
+  const { q = '' } = req.query;
+  const filter = q
+    ? {
+        $or: [
+          { title: new RegExp(q, 'i') },
+          { originalFilename: new RegExp(q, 'i') },
+          { tags: { $in: [new RegExp(q, 'i')] } },
+        ],
+      }
+    : {};
+  const items = await Media.find(filter).sort({ createdAt: -1 });
   res.json(items);
 };
 

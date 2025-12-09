@@ -18,43 +18,47 @@ const siteSettingsSchema = new mongoose.Schema({
     defaultMetaDescription: { type: String, default: '' },
     defaultOgImage: { type: String, default: '' },
   },
+  hours: { type: String, default: '' }, // Business hours
   favicon: { type: String, default: '' }, // Favicon path
-  logo: { type: String, default: '' }, // Logo path
-  hero: {
-    image: { type: String, default: '' }, // Hero image path
-    title: { type: String, default: '' }, // Hero title
-    subtitle: { type: String, default: '' }, // Hero subtitle
-    buttonText: { type: String, default: '' }, // Hero button text
-    buttonLink: { type: String, default: '' }, // Hero button link
-    enabled: { type: Boolean, default: false }, // Enable/disable hero section
+  // Hero configuration
+  heroBackgroundMode: {
+    type: String,
+    enum: ['color', 'image'],
+    default: 'color',
   },
-  theme: {
-    preset: {
-      type: String,
-      enum: [
-        'default',
-        'ocean-blue',
-        'sky-blue',
-        'navy-blue',
-        'royal-blue',
-        'dark',
-        'light',
-      ],
-      default: 'default',
-    },
-    header: {
-      backgroundColor: { type: String, default: '#ffffff' },
-      textColor: { type: String, default: '#0d6efd' },
-      linkColor: { type: String, default: '#000000' },
-      linkHoverColor: { type: String, default: '#0d6efd' },
-    },
-    footer: {
-      backgroundColor: { type: String, default: '#ffffff' },
-      textColor: { type: String, default: '#6c757d' },
-      linkColor: { type: String, default: '#0d6efd' },
-      linkHoverColor: { type: String, default: '#0a58ca' },
-      borderColor: { type: String, default: '#dee2e6' },
-    },
+  heroBackgroundImage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media',
+  },
+  heroLogo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media',
+  },
+  navbarLogo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media',
+  },
+  // Theme configuration
+  themeName: {
+    type: String,
+    enum: [
+      'waterBlue1',
+      'waterBlue2',
+      'aqua',
+      'deepBlue',
+      'tealWave',
+      'skyBlue',
+      'custom',
+    ],
+    default: 'waterBlue1',
+  },
+  // Custom theme colors (only used if themeName === 'custom')
+  customTheme: {
+    primaryColor: { type: String, default: '#0d6efd' },
+    secondaryColor: { type: String, default: '#6c757d' },
+    accentColor: { type: String, default: '#0dcaf0' },
+    backgroundColor: { type: String, default: '#ffffff' },
+    textColor: { type: String, default: '#000000' },
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

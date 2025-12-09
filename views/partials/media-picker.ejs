@@ -1,0 +1,164 @@
+<!-- Media Picker Modal -->
+<div class="modal fade" id="mediaPickerModal" tabindex="-1" aria-labelledby="mediaPickerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mediaPickerModalLabel">Select Media</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <input type="text" id="mediaSearchInput" class="form-control" placeholder="Search media...">
+        </div>
+        <div id="mediaPickerGrid" class="row g-3" style="max-height: 500px; overflow-y: auto;">
+          <!-- Media items will be loaded here -->
+        </div>
+        <div id="mediaPickerLoading" class="text-center py-5">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="mediaPickerSelectBtn" disabled>Select</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let mediaPickerCallback = null;
+let mediaPickerMultiple = false;
+let selectedMediaIds = [];
+
+// Function to open media picker
+function openMediaPicker(options = {}) {
+  mediaPickerCallback = options.callback || null;
+  mediaPickerMultiple = options.multiple || false;
+  selectedMediaIds = options.selectedIds || [];
+  
+  const modal = new bootstrap.Modal(document.getElementById('mediaPickerModal'));
+  modal.show();
+  loadMediaItems();
+}
+
+// Load media items
+async function loadMediaItems() {
+  const grid = document.getElementById('mediaPickerGrid');
+  const loading = document.getElementById('mediaPickerLoading');
+  const searchTerm = document.getElementById('mediaSearchInput').value;
+  
+  grid.innerHTML = '';
+  loading.style.display = 'block';
+  
+  try {
+    const url = '/admin/media/api/list' + (searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : '');
+    const response = await fetch(url);
+    const items = await response.json();
+    
+    loading.style.display = 'none';
+    
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="col-12 text-center text-muted py-5">No media found.</div>';
+      return;
+    }
+    
+    items.forEach(item => {
+      // Ensure ID is always a string
+      const mediaId = String(item._id);
+      const isSelected = selectedMediaIds.map(id => String(id)).includes(mediaId);
+      const thumbnailUrl = item.sizes?.thumbnail?.url ? `/public/${item.sizes.thumbnail.url}` : 
+                          item.sizes?.medium?.url ? `/public/${item.sizes.medium.url}` : 
+                          item.sizes?.large?.url ? `/public/${item.sizes.large.url}` : '';
+      
+      const col = document.createElement('div');
+      col.className = 'col-md-3';
+      col.innerHTML = `
+        <div class="card media-picker-item ${isSelected ? 'border-primary' : ''}" 
+             data-media-id="${mediaId}"
+             style="cursor: pointer;">
+          <div class="position-relative">
+            <img src="${thumbnailUrl}" class="card-img-top" style="height: 150px; object-fit: cover;" 
+                 alt="${item.altText || item.title || item.originalFilename}">
+            ${isSelected ? '<div class="position-absolute top-0 end-0 m-2"><span class="badge bg-primary"><i class="bi bi-check-circle"></i></span></div>' : ''}
+          </div>
+          <div class="card-body p-2">
+            <div class="small text-truncate" title="${item.title || item.originalFilename}">
+              ${item.title || item.originalFilename}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      col.querySelector('.media-picker-item').addEventListener('click', function() {
+        if (mediaPickerMultiple) {
+          const index = selectedMediaIds.map(id => String(id)).indexOf(mediaId);
+          if (index > -1) {
+            selectedMediaIds.splice(index, 1);
+          } else {
+            selectedMediaIds.push(mediaId);
+          }
+          loadMediaItems(); // Reload to update selection
+        } else {
+          selectedMediaIds = [mediaId];
+          loadMediaItems(); // Reload to update selection
+        }
+        updateSelectButton();
+      });
+      
+      grid.appendChild(col);
+    });
+    
+    updateSelectButton();
+  } catch (error) {
+    console.error('Error loading media:', error);
+    loading.style.display = 'none';
+    grid.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading media.</div>';
+  }
+}
+
+// Update select button state
+function updateSelectButton() {
+  const btn = document.getElementById('mediaPickerSelectBtn');
+  btn.disabled = selectedMediaIds.length === 0;
+}
+
+// Search functionality
+document.getElementById('mediaSearchInput')?.addEventListener('input', function() {
+  clearTimeout(this.searchTimeout);
+  this.searchTimeout = setTimeout(() => {
+    loadMediaItems();
+  }, 300);
+});
+
+// Select button click
+document.getElementById('mediaPickerSelectBtn')?.addEventListener('click', function() {
+  if (mediaPickerCallback && selectedMediaIds.length > 0) {
+    if (mediaPickerMultiple) {
+      // Ensure all IDs are strings
+      const ids = selectedMediaIds.map(id => String(id));
+      mediaPickerCallback(ids);
+    } else {
+      // Ensure ID is a string
+      const id = String(selectedMediaIds[0]);
+      mediaPickerCallback(id);
+    }
+  }
+  bootstrap.Modal.getInstance(document.getElementById('mediaPickerModal')).hide();
+});
+
+// Reset on modal close
+document.getElementById('mediaPickerModal')?.addEventListener('hidden.bs.modal', function() {
+  selectedMediaIds = [];
+  document.getElementById('mediaSearchInput').value = '';
+});
+</script>
+
+<style>
+.media-picker-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+</style>

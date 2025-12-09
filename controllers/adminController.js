@@ -2,6 +2,9 @@ const AdminUser = require('../models/AdminUser');
 const Project = require('../models/Project');
 const Contact = require('../models/Contact');
 const ProductQuote = require('../models/ProductQuote');
+const Inquiry = require('../models/Inquiry');
+const Product = require('../models/Product');
+const Service = require('../models/Service');
 const Media = require('../models/Media');
 const PageView = require('../models/PageView');
 const SiteSettings = require('../models/SiteSettings');
@@ -37,51 +40,25 @@ exports.getLogout = (req, res) => {
 };
 
 exports.getDashboard = async (req, res) => {
+  const productCount = await Product.countDocuments();
   const projectCount = await Project.countDocuments();
-  const contactCount = await Contact.countDocuments();
-  const unreadContactCount = await Contact.countDocuments({ isRead: false });
-  const productQuoteCount = await ProductQuote.countDocuments();
-  const unreadProductQuoteCount = await ProductQuote.countDocuments({
-    isRead: false,
-  });
-  const recentContacts = await Contact.find().sort({ createdAt: -1 }).limit(5);
-  const recentProductQuotes = await ProductQuote.find()
-    .populate('productId', 'name slug')
+  const serviceCount = await Service.countDocuments();
+  const mediaCount = await Media.countDocuments();
+  const inquiryCount = await Inquiry.countDocuments();
+  const recentInquiries = await Inquiry.find()
+    .populate('product', 'name slug')
     .sort({ createdAt: -1 })
-    .limit(10);
-
-  const totalViews = await PageView.countDocuments();
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
-  const last30 = await PageView.aggregate([
-    { $match: { timestamp: { $gte: since } } },
-    {
-      $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);
-  const topPages = await PageView.aggregate([
-    { $group: { _id: '$path', count: { $sum: 1 } } },
-    { $sort: { count: -1 } },
-    { $limit: 3 },
-  ]);
+    .limit(5);
 
   res.render('admin/dashboard', {
     title: 'Admin Dashboard',
     stats: {
+      productCount,
       projectCount,
-      contactCount,
-      unreadContactCount,
-      productQuoteCount,
-      unreadProductQuoteCount,
-      totalViews,
-      last30,
-      topPages,
+      serviceCount,
+      mediaCount,
+      inquiryCount,
     },
-    recentContacts,
-    recentProductQuotes,
+    recentInquiries,
   });
 };

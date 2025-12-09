@@ -6,9 +6,17 @@ const productSchema = new mongoose.Schema({
   slug: { type: String, unique: true, index: true },
   description: { type: String, default: '' },
   shortDescription: { type: String, default: '' },
-  image: { type: String, default: '' }, // file path from media
-  gallery: { type: [String], default: [] }, // array of file paths for product gallery
-  sizes: { type: [String], default: [] }, // e.g., ['12x24', '14x28', '16x32']
+  mainImage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media',
+  },
+  gallery: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Media',
+    default: [],
+  },
+  sizes: { type: [String], default: [] }, // e.g., ['12ft', '15ft', '18ft']
+  price: { type: String, default: '' }, // Optional price
 
   // Product Metadata
   sku: { type: String, default: '' }, // Product SKU/Code

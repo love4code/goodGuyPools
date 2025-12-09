@@ -1,25 +1,29 @@
 const mongoose = require('mongoose');
 
 const mediaSchema = new mongoose.Schema({
-  gridfsId: { type: mongoose.Schema.Types.ObjectId, required: true }, // GridFS file ID (original/large)
-  filePath: { type: String, required: true }, // /api/images/{gridfsId} for serving (large/original)
   originalFilename: { type: String, required: true },
   title: { type: String, default: '' },
   altText: { type: String, default: '' },
   tags: { type: [String], default: [] },
-  // Image size references
+  // Image size references with file paths and metadata
   sizes: {
-    thumbnail: {
-      gridfsId: { type: mongoose.Schema.Types.ObjectId },
-      filePath: { type: String }, // /api/images/{gridfsId}
+    large: {
+      url: { type: String, required: true }, // Relative path from public/uploads/
+      width: { type: Number },
+      height: { type: Number },
+      sizeInKb: { type: Number },
     },
     medium: {
-      gridfsId: { type: mongoose.Schema.Types.ObjectId },
-      filePath: { type: String }, // /api/images/{gridfsId}
+      url: { type: String, required: true },
+      width: { type: Number },
+      height: { type: Number },
+      sizeInKb: { type: Number },
     },
-    large: {
-      gridfsId: { type: mongoose.Schema.Types.ObjectId },
-      filePath: { type: String }, // /api/images/{gridfsId}
+    thumbnail: {
+      url: { type: String, required: true },
+      width: { type: Number },
+      height: { type: Number },
+      sizeInKb: { type: Number },
     },
   },
   createdAt: { type: Date, default: Date.now },

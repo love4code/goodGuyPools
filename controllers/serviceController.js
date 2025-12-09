@@ -12,19 +12,17 @@ exports.newForm = (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { title, description, order, icon } = req.body;
+    const { name, shortDescription, description, order, icon } = req.body;
     if (!icon || !icon.trim()) {
       req.flash('error', 'Icon is required');
       return res.redirect('/admin/services/new');
     }
-    const slug =
-      slugify(title || '', { lower: true, strict: true }) || undefined;
     await Service.create({
-      title,
-      description,
+      name: name || req.body.title || '',
+      shortDescription: shortDescription || '',
+      description: description || '',
       icon: icon.trim(),
       order: Number(order) || 0,
-      slug,
     });
     req.flash('success', 'Service created');
     res.redirect('/admin/services');
@@ -45,14 +43,15 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const { title, description, order, icon } = req.body;
+    const { name, shortDescription, description, order, icon } = req.body;
     if (!icon || !icon.trim()) {
       req.flash('error', 'Icon is required');
       return res.redirect(`/admin/services/${req.params.id}/edit`);
     }
     const update = {
-      title,
-      description,
+      name: name || req.body.title || '',
+      shortDescription: shortDescription || '',
+      description: description || '',
       icon: icon.trim(),
       order: Number(order) || 0,
       updatedAt: new Date(),

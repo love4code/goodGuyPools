@@ -1,5 +1,4 @@
-<%- include('../partials/header', { title: product ? 'Edit Product' : 'New Product', siteSettings }) %>
-<h1 class="h4 mb-3"><%= product ? 'Edit Product' : 'New Product' %></h1>
+<%- include('../partials/admin-header', { title: product ? 'Edit Product' : 'New Product', currentPage: 'products' }) %>
 
 <form action="<%= product ? '/admin/products/' + product._id : '/admin/products' %>" method="POST" enctype="multipart/form-data" class="row g-3">
   
@@ -33,14 +32,27 @@
     <h5 class="border-bottom pb-2 mb-3 mt-4">Product Media</h5>
   </div>
   <div class="col-md-6">
-    <label class="form-label">Featured Image</label>
+    <label class="form-label">Main Image</label>
     <div class="input-group mb-2">
-      <input type="text" id="image" name="image" class="form-control" placeholder="/api/images/..." value="<%= product ? product.image : '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('image')">Select from Library</button>
+      <input type="text" id="mainImage" name="mainImage" class="form-control" placeholder="Media ID" value="<%= product && product.mainImage ? (typeof product.mainImage === 'object' ? product.mainImage._id.toString() : product.mainImage.toString()) : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: false, callback: async function(id) { document.getElementById('mainImage').value = id; await updateProductMediaPreview(id, 'mainImage'); }})">Select from Library</button>
     </div>
     <div class="mb-3">
       <input type="file" name="featuredImageUpload" id="featuredImageUpload" class="form-control" accept="image/*">
-      <small class="text-muted">Or upload a new featured image</small>
+      <small class="text-muted">Or upload a new main image</small>
+    </div>
+    <div id="mainImagePreview" class="mt-2">
+      <% if (product && product.mainImage) { %>
+        <% 
+          let mainImgUrl = '';
+          if (typeof product.mainImage === 'object' && product.mainImage.sizes) {
+            mainImgUrl = '/public/' + (product.mainImage.sizes.medium?.url || product.mainImage.sizes.large?.url || product.mainImage.sizes.thumbnail?.url || '');
+          }
+        %>
+        <% if (mainImgUrl) { %>
+          <img src="<%= mainImgUrl %>" class="img-thumbnail" style="max-width: 200px; max-height: 150px; object-fit: cover;">
+        <% } %>
+      <% } %>
     </div>
   </div>
   <div class="col-md-12">
@@ -50,17 +62,25 @@
       <small class="text-muted">You can select multiple images at once (up to 20 images)</small>
     </div>
     <div class="input-group mb-2">
-      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="Or enter comma-separated paths: /api/images/...,/api/images/..." value="<%= product && product.gallery ? product.gallery.join(',') : '' %>">
-      <button class="btn btn-outline-secondary" type="button" onclick="openMediaModal('gallery')">Select from Library</button>
+      <input type="text" id="gallery" name="gallery" class="form-control" placeholder="Comma-separated Media IDs" value="<%= product && product.gallery ? product.gallery.map(img => typeof img === 'object' ? img._id.toString() : img.toString()).join(',') : '' %>">
+      <button class="btn btn-outline-secondary" type="button" onclick="openMediaPicker({multiple: true, callback: async function(ids) { document.getElementById('gallery').value = ids.join(','); await updateProductGalleryPreview(ids); }})">Select from Library</button>
     </div>
     <div id="galleryPreview" class="row g-2 mt-2">
       <% if (product && product.gallery && product.gallery.length > 0) { %>
         <% product.gallery.forEach(img => { %>
-          <div class="col-md-2">
-            <div class="position-relative">
-              <img src="<%= img %>" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+          <% 
+            let imgUrl = '';
+            if (typeof img === 'object' && img.sizes) {
+              imgUrl = '/public/' + (img.sizes.thumbnail?.url || img.sizes.medium?.url || img.sizes.large?.url || '');
+            }
+          %>
+          <% if (imgUrl) { %>
+            <div class="col-md-2">
+              <div class="position-relative">
+                <img src="<%= imgUrl %>" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+              </div>
             </div>
-          </div>
+          <% } %>
         <% }) %>
       <% } %>
     </div>
@@ -201,99 +221,123 @@
   </div>
 </form>
 
-<!-- Media Modal -->
-<div class="modal fade" id="mediaModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Select Media</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="mediaGrid" class="row g-3"></div>
-      </div>
-    </div>
-  </div>
-</div>
 <script>
-  let targetInput = null;
-  async function openMediaModal(targetId) {
-    targetInput = document.getElementById(targetId);
-    const grid = document.getElementById('mediaGrid');
-    grid.innerHTML = '<div class="text-center py-5">Loading...</div>';
+async function updateProductMediaPreview(mediaId, type) {
+  try {
+    const id = String(mediaId);
     const res = await fetch('/admin/media/api/list');
     const items = await res.json();
-    grid.innerHTML = items.map(m => `
-      <div class="col-md-3">
-        <div class="card h-100" onclick="selectMedia('${m.filePath}', '${targetId}')">
-          <img src="${m.filePath}" class="card-img-top" style="object-fit:cover;height:180px">
-          <div class="card-body small">
-            <div class="fw-semibold">${m.title || m.originalFilename}</div>
-            <div class="text-muted">${m.filePath}</div>
-          </div>
-        </div>
-      </div>
-    `).join('');
-    new bootstrap.Modal(document.getElementById('mediaModal')).show();
-  }
-  function selectMedia(path, targetId) {
-    if (targetId === 'gallery') {
-      const existing = targetInput.value ? targetInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-      existing.push(path);
-      targetInput.value = Array.from(new Set(existing)).join(',');
-      updateGalleryPreview();
-    } else {
-      targetInput.value = path;
-    }
-    bootstrap.Modal.getInstance(document.getElementById('mediaModal')).hide();
-  }
-
-  // Preview selected files before upload
-  document.getElementById('galleryImages').addEventListener('change', function(e) {
-    const preview = document.getElementById('galleryPreview');
-    preview.innerHTML = '';
-    if (this.files.length > 0) {
-      Array.from(this.files).forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const div = document.createElement('div');
-            div.className = 'col-md-2';
-            div.innerHTML = `
-              <div class="position-relative">
-                <img src="${e.target.result}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
-                <small class="d-block text-truncate">${file.name}</small>
-              </div>
-            `;
-            preview.appendChild(div);
-          };
-          reader.readAsDataURL(file);
+    const media = items.find(m => String(m._id) === id);
+    if (media && media.sizes) {
+      const imageUrl = '/public/' + (media.sizes.medium?.url || media.sizes.large?.url || media.sizes.thumbnail?.url || '');
+      if (imageUrl && type === 'mainImage') {
+        const preview = document.getElementById('mainImagePreview');
+        if (preview) {
+          preview.innerHTML = `<img src="${imageUrl}" class="img-thumbnail" style="max-width: 200px; max-height: 150px; object-fit: cover;">`;
         }
-      });
-    } else {
-      updateGalleryPreview();
+      }
     }
-  });
-
-  // Update gallery preview from text input
-  function updateGalleryPreview() {
-    const galleryInput = document.getElementById('gallery');
-    const preview = document.getElementById('galleryPreview');
-    const paths = galleryInput.value ? galleryInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-    
-    // Only show preview if no files are selected for upload
-    if (document.getElementById('galleryImages').files.length === 0 && paths.length > 0) {
-      preview.innerHTML = paths.map(path => `
-        <div class="col-md-2">
-          <div class="position-relative">
-            <img src="${path}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover" onerror="this.style.display='none'">
-          </div>
-        </div>
-      `).join('');
-    }
+  } catch (error) {
+    console.error('Error loading media preview:', error);
   }
+}
 
-  // Initial preview load
-  updateGalleryPreview();
+async function updateProductGalleryPreview(mediaIds) {
+  try {
+    const res = await fetch('/admin/media/api/list');
+    const items = await res.json();
+    const preview = document.getElementById('galleryPreview');
+    if (!preview) return;
+    
+    preview.innerHTML = '';
+    for (const id of mediaIds) {
+      const media = items.find(m => String(m._id) === String(id));
+      if (media && media.sizes) {
+        const imageUrl = '/public/' + (media.sizes.thumbnail?.url || media.sizes.medium?.url || media.sizes.large?.url || '');
+        if (imageUrl) {
+          const col = document.createElement('div');
+          col.className = 'col-md-2';
+          col.innerHTML = `<div class="position-relative"><img src="${imageUrl}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover"></div>`;
+          preview.appendChild(col);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading gallery preview:', error);
+  }
+}
+
+// Preview selected files before upload
+document.getElementById('galleryImages')?.addEventListener('change', function(e) {
+  const preview = document.getElementById('galleryPreview');
+  if (!preview) return;
+  preview.innerHTML = '';
+  if (this.files.length > 0) {
+    Array.from(this.files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement('div');
+          div.className = 'col-md-2';
+          div.innerHTML = `
+            <div class="position-relative">
+              <img src="${e.target.result}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover">
+              <small class="d-block text-truncate">${file.name}</small>
+            </div>
+          `;
+          preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+});
 </script>
-<%- include('../partials/footer', { siteSettings }) %>
+<script>
+async function updateProductMediaPreview(mediaId, type) {
+  try {
+    const id = String(mediaId);
+    const res = await fetch('/admin/media/api/list');
+    const items = await res.json();
+    const media = items.find(m => String(m._id) === id);
+    if (media && media.sizes) {
+      const imageUrl = '/public/' + (media.sizes.medium?.url || media.sizes.large?.url || media.sizes.thumbnail?.url || '');
+      if (imageUrl && type === 'mainImage') {
+        const preview = document.getElementById('mainImagePreview');
+        if (preview) {
+          preview.innerHTML = `<img src="${imageUrl}" class="img-thumbnail" style="max-width: 200px; max-height: 150px; object-fit: cover;">`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading media preview:', error);
+  }
+}
+
+async function updateProductGalleryPreview(mediaIds) {
+  try {
+    const res = await fetch('/admin/media/api/list');
+    const items = await res.json();
+    const preview = document.getElementById('galleryPreview');
+    if (!preview) return;
+    
+    preview.innerHTML = '';
+    for (const id of mediaIds) {
+      const media = items.find(m => String(m._id) === String(id));
+      if (media && media.sizes) {
+        const imageUrl = '/public/' + (media.sizes.thumbnail?.url || media.sizes.medium?.url || media.sizes.large?.url || '');
+        if (imageUrl) {
+          const col = document.createElement('div');
+          col.className = 'col-md-2';
+          col.innerHTML = `<div class="position-relative"><img src="${imageUrl}" class="img-thumbnail" style="width:100%;height:100px;object-fit:cover"></div>`;
+          preview.appendChild(col);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading gallery preview:', error);
+  }
+}
+</script>
+
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,62 @@
+<%- include('../partials/admin-header', { title: 'Inquiry Details', currentPage: 'inquiries' }) %>
+
+<div class="mb-4">
+  <a href="/admin/inquiries" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Inquiries
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">Inquiry Details</h2>
+    <form action="/admin/inquiries/<%= inquiry._id %>/delete" method="POST" onsubmit="return confirm('Delete this inquiry?')" class="d-inline">
+      <button class="btn btn-sm btn-outline-danger">Delete</button>
+    </form>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <strong>Date:</strong>
+        <div><%= new Date(inquiry.createdAt).toLocaleString() %></div>
+      </div>
+      <div class="col-md-6">
+        <strong>Type:</strong>
+        <div>
+          <span class="badge bg-<%= inquiry.type === 'product' ? 'primary' : 'info' %>">
+            <%= inquiry.type %>
+          </span>
+        </div>
+      </div>
+      <% if (inquiry.productName) { %>
+        <div class="col-md-6">
+          <strong>Product:</strong>
+          <div><%= inquiry.productName %></div>
+        </div>
+      <% } %>
+      <div class="col-md-6">
+        <strong>Name:</strong>
+        <div><%= inquiry.name %></div>
+      </div>
+      <div class="col-md-6">
+        <strong>Email:</strong>
+        <div><a href="mailto:<%= inquiry.email %>"><%= inquiry.email %></a></div>
+      </div>
+      <div class="col-md-6">
+        <strong>Phone:</strong>
+        <div><a href="tel:<%= inquiry.phone %>"><%= inquiry.phone %></a></div>
+      </div>
+      <% if (inquiry.size) { %>
+        <div class="col-md-6">
+          <strong>Size:</strong>
+          <div><%= inquiry.size %></div>
+        </div>
+      <% } %>
+      <div class="col-12">
+        <strong>Description:</strong>
+        <div class="mt-2 p-3 bg-light rounded"><%= inquiry.description || '-' %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

@@ -1,6 +1,6 @@
-<%- include('../partials/header', { title: 'Services', siteSettings }) %>
+<%- include('../partials/admin-header', { title: 'Services', currentPage: 'services' }) %>
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0">Services</h1>
+  <h2 class="h4 mb-0">Services</h2>
   <a href="/admin/services/new" class="btn btn-primary">New Service</a>
 </div>
 <div class="table-responsive">
@@ -8,7 +8,8 @@
     <thead>
       <tr>
         <th>Icon</th>
-        <th>Title</th>
+        <th>Name</th>
+        <th>Short Description</th>
         <th>Description</th>
         <th>Order</th>
         <th>Created</th>
@@ -18,10 +19,13 @@
     <tbody>
       <% if (services && services.length) { %> <% services.forEach(s => { %>
       <tr>
-        <td><% if (s.icon) { %><i class="bi <%= s.icon %>"></i><% } %></td>
-        <td><%= s.title %></td>
-        <td class="text-truncate" style="max-width: 420px">
-          <%= s.description %>
+        <td><% if (s.icon) { %><i class="bi <%= s.icon %>" style="font-size: 1.5rem;"></i><% } %></td>
+        <td><%= s.name || s.title %></td>
+        <td class="text-truncate" style="max-width: 200px">
+          <%= s.shortDescription || '-' %>
+        </td>
+        <td class="text-truncate" style="max-width: 300px">
+          <%= s.description || '-' %>
         </td>
         <td><%= s.order %></td>
         <td><%= new Date(s.createdAt).toLocaleDateString() %></td>
@@ -43,10 +47,10 @@
       </tr>
       <% }) %> <% } else { %>
       <tr>
-        <td colspan="5" class="text-center text-muted">No services yet.</td>
+        <td colspan="6" class="text-center text-muted">No services yet.</td>
       </tr>
       <% } %>
     </tbody>
   </table>
 </div>
-<%- include('../partials/footer', { siteSettings }) %>
+<%- include('../partials/admin-footer') %>

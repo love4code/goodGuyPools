@@ -1,16 +1,19 @@
-<%- include('../partials/header', { title: 'Media Library', settings }) %>
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0">Media Library</h1>
+<%- include('../partials/admin-header', { title: 'Media Library', currentPage: 'media' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="h4 mb-0">Media Library</h2>
 </div>
+
 <div class="row g-4">
   <div class="col-lg-4">
     <div class="card">
       <div class="card-body">
-        <h2 class="h5">Upload Images</h2>
-        <form action="/admin/media/upload-multiple" method="POST" enctype="multipart/form-data" class="vstack gap-2">
+        <h2 class="h5 mb-3">Upload Images</h2>
+        <form id="uploadForm" class="vstack gap-3">
           <div>
-            <label class="form-label">Images *</label>
-            <input type="file" name="images" class="form-control" accept="image/*" multiple required>
+            <label class="form-label">Images * (up to 20)</label>
+            <input type="file" id="imageInput" name="images" class="form-control" accept="image/*" multiple required>
+            <small class="text-muted">Select up to 20 images to upload</small>
           </div>
           <div>
             <label class="form-label">Title</label>
@@ -24,35 +27,150 @@
             <label class="form-label">Tags (comma separated)</label>
             <input type="text" name="tags" class="form-control">
           </div>
-          <button class="btn btn-primary">Upload</button>
+          <button type="submit" class="btn btn-primary" id="uploadBtn">
+            <i class="bi bi-upload"></i> Upload
+          </button>
         </form>
+        
+        <!-- Upload Progress -->
+        <div id="uploadProgress" style="display: none;" class="mt-3">
+          <div class="mb-2">
+            <strong>Uploading...</strong>
+          </div>
+          <div id="fileProgressList"></div>
+        </div>
       </div>
     </div>
   </div>
+  
   <div class="col-lg-8">
-    <div class="row g-3">
+    <div class="row g-3" id="mediaGrid">
       <% if (items && items.length) { %>
         <% items.forEach(m => { %>
           <div class="col-md-4">
             <div class="card h-100">
-              <img src="<%= m.filePath %>" class="card-img-top" style="object-fit:cover;height:180px" alt="<%= m.altText || m.title %>">
+              <img src="/public/<%= m.sizes?.thumbnail?.url || m.sizes?.medium?.url || m.sizes?.large?.url || '' %>" 
+                   class="card-img-top" 
+                   style="object-fit:cover;height:180px" 
+                   alt="<%= m.altText || m.title || m.originalFilename %>"
+                   onerror="this.src='/public/<%= m.sizes?.large?.url || '' %>'">
               <div class="card-body">
                 <div class="small fw-semibold"><%= m.title || m.originalFilename %></div>
-                <div class="text-muted small"><%= m.filePath %></div>
-                  <a href="/admin/media/<%= m._id %>/edit" class="btn btn-sm btn-outline-primary mt-2">Edit</a>
-                <form action="/admin/media/<%= m._id %>/delete" method="POST" class="mt-2" onsubmit="return confirm('Delete this image?')">
-                  <button class="btn btn-sm btn-outline-danger">Delete</button>
-                </form>
+                <div class="text-muted small">
+                  <% if (m.sizes?.large) { %>
+                    Large: <%= m.sizes.large.width %>x<%= m.sizes.large.height %> (<%= m.sizes.large.sizeInKb %>KB)
+                  <% } %>
+                </div>
+                <div class="mt-2 d-flex gap-2">
+                  <a href="/admin/media/<%= m._id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+                  <form action="/admin/media/<%= m._id %>/delete" method="POST" onsubmit="return confirm('Delete this image?')" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
         <% }) %>
       <% } else { %>
-        <div class="col-12"><div class="alert alert-secondary">No media yet.</div></div>
+        <div class="col-12">
+          <div class="alert alert-secondary">No media yet. Upload some images to get started.</div>
+        </div>
       <% } %>
     </div>
   </div>
 </div>
-<%- include('../partials/footer', { settings }) %>
 
+<script>
+document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const files = document.getElementById('imageInput').files;
+  
+  if (files.length === 0) {
+    alert('Please select at least one image');
+    return;
+  }
+  
+  if (files.length > 20) {
+    alert('Maximum 20 images allowed');
+    return;
+  }
+  
+  // Add files to FormData
+  for (let i = 0; i < files.length; i++) {
+    formData.append('images', files[i]);
+  }
+  
+  const uploadBtn = document.getElementById('uploadBtn');
+  const uploadProgress = document.getElementById('uploadProgress');
+  const fileProgressList = document.getElementById('fileProgressList');
+  
+  uploadBtn.disabled = true;
+  uploadProgress.style.display = 'block';
+  fileProgressList.innerHTML = '';
+  
+  // Create progress bars for each file
+  const progressBars = {};
+  for (let i = 0; i < files.length; i++) {
+    const fileName = files[i].name;
+    const progressHtml = `
+      <div class="mb-2" data-file="${fileName}">
+        <div class="d-flex justify-content-between mb-1">
+          <small>${fileName}</small>
+          <small class="progress-text">0%</small>
+        </div>
+        <div class="progress" style="height: 20px;">
+          <div class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+        </div>
+      </div>
+    `;
+    fileProgressList.insertAdjacentHTML('beforeend', progressHtml);
+    progressBars[fileName] = fileProgressList.querySelector(`[data-file="${fileName}"] .progress-bar`);
+  }
+  
+  try {
+    const xhr = new XMLHttpRequest();
+    
+    // Track upload progress
+    xhr.upload.addEventListener('progress', function(e) {
+      if (e.lengthComputable) {
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
+        // Update all progress bars (since we can't track individual files with XHR)
+        Object.values(progressBars).forEach(bar => {
+          bar.style.width = percentComplete + '%';
+          bar.textContent = percentComplete + '%';
+          bar.parentElement.previousElementSibling.querySelector('.progress-text').textContent = percentComplete + '%';
+        });
+      }
+    });
+    
+    xhr.addEventListener('load', function() {
+      if (xhr.status === 200 || xhr.status === 302) {
+        // Success - reload page
+        window.location.href = '/admin/media';
+      } else {
+        alert('Upload failed. Please try again.');
+        uploadBtn.disabled = false;
+        uploadProgress.style.display = 'none';
+      }
+    });
+    
+    xhr.addEventListener('error', function() {
+      alert('Upload error. Please try again.');
+      uploadBtn.disabled = false;
+      uploadProgress.style.display = 'none';
+    });
+    
+    xhr.open('POST', '/admin/media/upload-multiple');
+    xhr.send(formData);
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert('Upload error. Please try again.');
+    uploadBtn.disabled = false;
+    uploadProgress.style.display = 'none';
+  }
+});
+</script>
 
+<%- include('../partials/admin-footer') %>
