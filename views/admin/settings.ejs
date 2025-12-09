@@ -162,7 +162,25 @@
   </div>
 
   <div class="col-md-12">
-    <label class="form-label">Theme</label>
+    <label class="form-label">Quick Theme Presets</label>
+    <select id="themePreset" class="form-select" onchange="applyPreset()">
+      <option value="">-- Select a preset theme --</option>
+      <option value="default">Default (White)</option>
+      <option value="light-grey">Light Grey</option>
+      <option value="medium-grey">Medium Grey</option>
+      <option value="warm-grey">Warm Grey</option>
+      <option value="ocean-blue">Ocean Blue</option>
+      <option value="sky-blue">Sky Blue</option>
+      <option value="navy-blue">Navy Blue</option>
+      <option value="royal-blue">Royal Blue</option>
+      <option value="dark">Dark Theme</option>
+      <option value="light">Light Theme</option>
+    </select>
+    <small class="text-muted">Select a preset to quickly apply theme colors, or customize manually below</small>
+  </div>
+  
+  <div class="col-md-12">
+    <label class="form-label">Theme Name (Legacy)</label>
     <select name="themeName" id="themeName" class="form-select">
       <option value="waterBlue1" <%= settings.themeName === 'waterBlue1' ? 'selected' : '' %>>Water Blue 1</option>
       <option value="waterBlue2" <%= settings.themeName === 'waterBlue2' ? 'selected' : '' %>>Water Blue 2</option>
@@ -172,7 +190,7 @@
       <option value="skyBlue" <%= settings.themeName === 'skyBlue' ? 'selected' : '' %>>Sky Blue</option>
       <option value="custom" <%= settings.themeName === 'custom' ? 'selected' : '' %>>Custom Theme</option>
     </select>
-    <small class="text-muted">Select a preset theme or choose "Custom Theme" to set your own colors</small>
+    <small class="text-muted">Legacy theme name field (for backwards compatibility)</small>
   </div>
 
   <div id="customThemeFields" style="display: <%= settings.themeName === 'custom' ? 'block' : 'none' %>;">
@@ -296,6 +314,18 @@
       header: { backgroundColor: '#ffffff', textColor: '#0d6efd', linkColor: '#000000', linkHoverColor: '#0d6efd' },
       footer: { backgroundColor: '#ffffff', textColor: '#6c757d', linkColor: '#0d6efd', linkHoverColor: '#0a58ca', borderColor: '#dee2e6' }
     },
+    'light-grey': {
+      header: { backgroundColor: '#f5f5f5', textColor: '#333333', linkColor: '#333333', linkHoverColor: '#0d6efd' },
+      footer: { backgroundColor: '#e9ecef', textColor: '#495057', linkColor: '#495057', linkHoverColor: '#0d6efd', borderColor: '#ced4da' }
+    },
+    'medium-grey': {
+      header: { backgroundColor: '#e9ecef', textColor: '#212529', linkColor: '#212529', linkHoverColor: '#0d6efd' },
+      footer: { backgroundColor: '#dee2e6', textColor: '#495057', linkColor: '#495057', linkHoverColor: '#0d6efd', borderColor: '#adb5bd' }
+    },
+    'warm-grey': {
+      header: { backgroundColor: '#f8f9fa', textColor: '#343a40', linkColor: '#343a40', linkHoverColor: '#6c757d' },
+      footer: { backgroundColor: '#e9ecef', textColor: '#6c757d', linkColor: '#495057', linkHoverColor: '#343a40', borderColor: '#ced4da' }
+    },
     'ocean-blue': {
       header: { backgroundColor: '#006994', textColor: '#ffffff', linkColor: '#ffffff', linkHoverColor: '#b3e5fc' },
       footer: { backgroundColor: '#003d5b', textColor: '#ffffff', linkColor: '#80d6ff', linkHoverColor: '#b3e5fc', borderColor: '#006994' }
@@ -324,7 +354,7 @@
 
   function applyPreset() {
     const preset = document.getElementById('themePreset').value;
-    if (preset === 'custom') return; // Don't override custom colors
+    if (!preset || preset === '') return; // Don't override if no preset selected
     
     const theme = presets[preset];
     if (theme) {
