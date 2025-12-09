@@ -2,6 +2,11 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="h4 mb-0">Media Library</h2>
+  <div id="bulkActions" style="display: none;">
+    <button type="button" class="btn btn-danger" id="bulkDeleteBtn">
+      <i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+    </button>
+  </div>
 </div>
 
 <div class="row g-4">
@@ -44,16 +49,29 @@
   </div>
   
   <div class="col-lg-8">
+    <% if (items && items.length) { %>
+      <div class="mb-3">
+        <label class="form-check">
+          <input type="checkbox" class="form-check-input" id="selectAll">
+          <span class="form-check-label">Select All</span>
+        </label>
+      </div>
+    <% } %>
     <div class="row g-3" id="mediaGrid">
       <% if (items && items.length) { %>
         <% items.forEach(m => { %>
           <div class="col-md-4">
             <div class="card h-100">
-              <img src="/public/<%= m.sizes?.thumbnail?.url || m.sizes?.medium?.url || m.sizes?.large?.url || '' %>" 
-                   class="card-img-top" 
-                   style="object-fit:cover;height:180px" 
-                   alt="<%= m.altText || m.title || m.originalFilename %>"
-                   onerror="this.src='/public/<%= m.sizes?.large?.url || '' %>'">
+              <div class="position-relative">
+                <div class="position-absolute top-0 start-0 m-2">
+                  <input type="checkbox" class="form-check-input media-checkbox" value="<%= m._id %>" data-media-id="<%= m._id %>">
+                </div>
+                <img src="/public/<%= m.sizes?.thumbnail?.url || m.sizes?.medium?.url || m.sizes?.large?.url || '' %>" 
+                     class="card-img-top" 
+                     style="object-fit:cover;height:180px" 
+                     alt="<%= m.altText || m.title || m.originalFilename %>"
+                     onerror="this.src='/public/<%= m.sizes?.large?.url || '' %>'">
+              </div>
               <div class="card-body">
                 <div class="small fw-semibold"><%= m.title || m.originalFilename %></div>
                 <div class="text-muted small">
@@ -84,7 +102,6 @@
 document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
   
-  const formData = new FormData(this);
   const files = document.getElementById('imageInput').files;
   
   if (files.length === 0) {
@@ -97,10 +114,22 @@ document.getElementById('uploadForm')?.addEventListener('submit', async function
     return;
   }
   
-  // Add files to FormData
+  // Create FormData manually to avoid duplicate file entries
+  const formData = new FormData();
+  
+  // Add files to FormData (only once)
   for (let i = 0; i < files.length; i++) {
     formData.append('images', files[i]);
   }
+  
+  // Add other form fields
+  const title = this.querySelector('[name="title"]').value;
+  const altText = this.querySelector('[name="altText"]').value;
+  const tags = this.querySelector('[name="tags"]').value;
+  
+  if (title) formData.append('title', title);
+  if (altText) formData.append('altText', altText);
+  if (tags) formData.append('tags', tags);
   
   const uploadBtn = document.getElementById('uploadBtn');
   const uploadProgress = document.getElementById('uploadProgress');
@@ -171,6 +200,94 @@ document.getElementById('uploadForm')?.addEventListener('submit', async function
     uploadProgress.style.display = 'none';
   }
 });
+
+// Bulk delete functionality
+(function() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const mediaCheckboxes = document.querySelectorAll('.media-checkbox');
+  const bulkActions = document.getElementById('bulkActions');
+  const selectedCount = document.getElementById('selectedCount');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+  function updateBulkActions() {
+    const checked = document.querySelectorAll('.media-checkbox:checked');
+    const count = checked.length;
+    
+    if (count > 0) {
+      bulkActions.style.display = 'block';
+      selectedCount.textContent = count;
+    } else {
+      bulkActions.style.display = 'none';
+    }
+    
+    // Update select all checkbox state
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = count === mediaCheckboxes.length && mediaCheckboxes.length > 0;
+      selectAllCheckbox.indeterminate = count > 0 && count < mediaCheckboxes.length;
+    }
+  }
+
+  // Select all checkbox
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', function() {
+      mediaCheckboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+      updateBulkActions();
+    });
+  }
+
+  // Individual checkboxes
+  mediaCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+  });
+
+  // Bulk delete button
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', function() {
+      const checked = document.querySelectorAll('.media-checkbox:checked');
+      const ids = Array.from(checked).map(cb => cb.value);
+      
+      if (ids.length === 0) {
+        alert('Please select at least one image to delete');
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to delete ${ids.length} image(s)? This action cannot be undone.`)) {
+        return;
+      }
+      
+      // Disable button and show loading state
+      bulkDeleteBtn.disabled = true;
+      bulkDeleteBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Deleting...';
+      
+      // Send delete request
+      fetch('/admin/media/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: ids })
+      })
+      .then(response => {
+        if (response.ok || response.status === 302) {
+          window.location.href = '/admin/media';
+        } else {
+          throw new Error('Delete failed');
+        }
+      })
+      .catch(error => {
+        console.error('Delete error:', error);
+        alert('Error deleting images. Please try again.');
+        bulkDeleteBtn.disabled = false;
+        bulkDeleteBtn.innerHTML = '<i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">' + ids.length + '</span>)';
+      });
+    });
+  }
+
+  // Initial update
+  updateBulkActions();
+})();
 </script>
 
 <%- include('../partials/admin-footer') %>

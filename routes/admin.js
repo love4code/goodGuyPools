@@ -91,11 +91,14 @@ router.post(
   require('../middleware/upload').processImages,
   mediaController.uploadMultiple,
 );
+// Bulk delete endpoint (must be before :id routes)
+router.post('/media/bulk-delete', requireAuth, mediaController.bulkRemove);
+// API list endpoint
+router.get('/media/api/list', requireAuth, mediaController.apiList);
 // Edit media metadata
 router.get('/media/:id/edit', requireAuth, mediaController.editForm);
 router.post('/media/:id', requireAuth, mediaController.update);
 router.post('/media/:id/delete', requireAuth, mediaController.remove);
-router.get('/media/api/list', requireAuth, mediaController.apiList);
 
 // Settings
 router.get('/settings', requireAuth, settingsController.getSettings);

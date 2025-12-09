@@ -112,6 +112,64 @@ exports.remove = async (req, res) => {
   }
 };
 
+exports.bulkRemove = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      req.flash('error', 'No images selected');
+      return res.redirect('/admin/media');
+    }
+
+    // Validate all IDs are valid MongoDB ObjectIds
+    const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    if (validIds.length === 0) {
+      req.flash('error', 'Invalid image IDs');
+      return res.redirect('/admin/media');
+    }
+
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    // Delete each media item and its files
+    for (const id of validIds) {
+      try {
+        const media = await Media.findById(id);
+        if (media) {
+          // Delete all files from file system
+          const mediaDir = path.join(__dirname, '..', 'public', 'uploads', id);
+          try {
+            await fs.rm(mediaDir, { recursive: true, force: true });
+          } catch (err) {
+            console.error(`Error deleting media directory for ${id}:`, err);
+          }
+
+          await Media.findByIdAndDelete(id);
+          deletedCount++;
+        }
+      } catch (err) {
+        console.error(`Error deleting media ${id}:`, err);
+        errorCount++;
+      }
+    }
+
+    if (errorCount > 0) {
+      req.flash(
+        'error',
+        `Deleted ${deletedCount} image(s), ${errorCount} error(s)`,
+      );
+    } else {
+      req.flash('success', `Deleted ${deletedCount} image(s)`);
+    }
+
+    res.redirect('/admin/media');
+  } catch (e) {
+    req.flash('error', e.message);
+    res.redirect('/admin/media');
+  }
+};
+
 exports.apiList = async (req, res) => {
   const { q = '' } = req.query;
   const filter = q
