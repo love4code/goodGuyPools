@@ -31,8 +31,16 @@ exports.postLogin = async (req, res) => {
     return res.redirect('/admin/login');
   }
   req.session.userId = user._id.toString();
-  req.flash('success', 'Welcome back!');
-  res.redirect('/admin');
+  // Save session before redirecting to ensure it's persisted
+  req.session.save((err) => {
+    if (err) {
+      console.error('Session save error:', err);
+      req.flash('error', 'Login failed. Please try again.');
+      return res.redirect('/admin/login');
+    }
+    req.flash('success', 'Welcome back!');
+    res.redirect('/admin');
+  });
 };
 
 exports.getLogout = (req, res) => {

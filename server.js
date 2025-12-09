@@ -64,7 +64,7 @@ const sessionConfig = {
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: 'lax', // 'lax' works better with redirects than 'strict'
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days for authenticated users
   },
 };
