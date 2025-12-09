@@ -4,6 +4,30 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { getGridFSBucket, deleteFromGridFS } = require('../utils/gridfs');
 
+// Helper function to get image URL from media object (supports both fileId and legacy url)
+function getImageUrl (media, preferredSize = 'thumbnail') {
+  if (!media || !media.sizes) return '';
+
+  // Try preferred size first, then fallback to others
+  const sizeOrder =
+    preferredSize === 'thumbnail'
+      ? ['thumbnail', 'medium', 'large']
+      : preferredSize === 'medium'
+      ? ['medium', 'large', 'thumbnail']
+      : ['large', 'medium', 'thumbnail'];
+
+  for (const size of sizeOrder) {
+    if (media.sizes[size]?.fileId) {
+      return `/admin/media/image/${media.sizes[size].fileId}`;
+    }
+    if (media.sizes[size]?.url) {
+      return `/public/${media.sizes[size].url}`;
+    }
+  }
+
+  return '';
+}
+
 exports.list = async (req, res) => {
   const { q = '', page = 1 } = req.query;
   const perPage = 24;
@@ -91,7 +115,7 @@ exports.remove = async (req, res) => {
       req.flash('error', 'Not found');
       return res.redirect('/admin/media');
     }
-    // Delete all files from GridFS
+    // Delete all files from GridFS (new format)
     if (media.sizes) {
       if (media.sizes.thumbnail?.fileId) {
         await deleteFromGridFS(media.sizes.thumbnail.fileId);
@@ -101,6 +125,25 @@ exports.remove = async (req, res) => {
       }
       if (media.sizes.large?.fileId) {
         await deleteFromGridFS(media.sizes.large.fileId);
+      }
+      // Delete legacy file system files (old format)
+      if (
+        media.sizes.thumbnail?.url ||
+        media.sizes.medium?.url ||
+        media.sizes.large?.url
+      ) {
+        const mediaDir = path.join(
+          __dirname,
+          '..',
+          'public',
+          'uploads',
+          req.params.id,
+        );
+        try {
+          await fs.rm(mediaDir, { recursive: true, force: true });
+        } catch (err) {
+          console.error('Error deleting media directory:', err);
+        }
       }
     }
     await Media.findByIdAndDelete(req.params.id);
@@ -137,7 +180,7 @@ exports.bulkRemove = async (req, res) => {
       try {
         const media = await Media.findById(id);
         if (media) {
-          // Delete all files from GridFS
+          // Delete all files from GridFS (new format)
           if (media.sizes) {
             if (media.sizes.thumbnail?.fileId) {
               await deleteFromGridFS(media.sizes.thumbnail.fileId);
@@ -147,6 +190,25 @@ exports.bulkRemove = async (req, res) => {
             }
             if (media.sizes.large?.fileId) {
               await deleteFromGridFS(media.sizes.large.fileId);
+            }
+            // Delete legacy file system files (old format)
+            if (
+              media.sizes.thumbnail?.url ||
+              media.sizes.medium?.url ||
+              media.sizes.large?.url
+            ) {
+              const mediaDir = path.join(
+                __dirname,
+                '..',
+                'public',
+                'uploads',
+                id,
+              );
+              try {
+                await fs.rm(mediaDir, { recursive: true, force: true });
+              } catch (err) {
+                console.error(`Error deleting media directory for ${id}:`, err);
+              }
             }
           }
 
@@ -226,6 +288,11 @@ exports.update = async (req, res) => {
 exports.serveImage = async (req, res) => {
   try {
     const { fileId } = req.params;
+
+    // Handle empty fileId (from legacy media items)
+    if (!fileId || fileId.trim() === '') {
+      return res.status(404).send('File ID not provided');
+    }
 
     if (!mongoose.Types.ObjectId.isValid(fileId)) {
       return res.status(400).send('Invalid file ID');

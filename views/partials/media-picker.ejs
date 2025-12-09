@@ -68,9 +68,21 @@ async function loadMediaItems() {
       // Ensure ID is always a string
       const mediaId = String(item._id);
       const isSelected = selectedMediaIds.map(id => String(id)).includes(mediaId);
-      const thumbnailUrl = item.sizes?.thumbnail?.fileId ? `/admin/media/image/${item.sizes.thumbnail.fileId}` :
-                          item.sizes?.medium?.fileId ? `/admin/media/image/${item.sizes.medium.fileId}` :
-                          item.sizes?.large?.fileId ? `/admin/media/image/${item.sizes.large.fileId}` : '';
+      // Support both new (fileId) and legacy (url) formats
+      let thumbnailUrl = '';
+      if (item.sizes?.thumbnail?.fileId) {
+        thumbnailUrl = `/admin/media/image/${item.sizes.thumbnail.fileId}`;
+      } else if (item.sizes?.medium?.fileId) {
+        thumbnailUrl = `/admin/media/image/${item.sizes.medium.fileId}`;
+      } else if (item.sizes?.large?.fileId) {
+        thumbnailUrl = `/admin/media/image/${item.sizes.large.fileId}`;
+      } else if (item.sizes?.thumbnail?.url) {
+        thumbnailUrl = `/public/${item.sizes.thumbnail.url}`;
+      } else if (item.sizes?.medium?.url) {
+        thumbnailUrl = `/public/${item.sizes.medium.url}`;
+      } else if (item.sizes?.large?.url) {
+        thumbnailUrl = `/public/${item.sizes.large.url}`;
+      }
       
       const col = document.createElement('div');
       col.className = 'col-md-3';

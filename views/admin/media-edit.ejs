@@ -6,9 +6,21 @@
         <h2 class="h5 mb-3">Edit Media</h2>
         <div class="mb-3">
           <% 
-            let mediaImgUrl = media.sizes?.large?.fileId ? '/admin/media/image/' + media.sizes.large.fileId :
-                              media.sizes?.medium?.fileId ? '/admin/media/image/' + media.sizes.medium.fileId :
-                              media.sizes?.thumbnail?.fileId ? '/admin/media/image/' + media.sizes.thumbnail.fileId : '';
+            // Support both new (fileId) and legacy (url) formats
+            let mediaImgUrl = '';
+            if (media.sizes?.large?.fileId) {
+              mediaImgUrl = '/admin/media/image/' + media.sizes.large.fileId;
+            } else if (media.sizes?.medium?.fileId) {
+              mediaImgUrl = '/admin/media/image/' + media.sizes.medium.fileId;
+            } else if (media.sizes?.thumbnail?.fileId) {
+              mediaImgUrl = '/admin/media/image/' + media.sizes.thumbnail.fileId;
+            } else if (media.sizes?.large?.url) {
+              mediaImgUrl = '/public/' + media.sizes.large.url;
+            } else if (media.sizes?.medium?.url) {
+              mediaImgUrl = '/public/' + media.sizes.medium.url;
+            } else if (media.sizes?.thumbnail?.url) {
+              mediaImgUrl = '/public/' + media.sizes.thumbnail.url;
+            }
           %>
           <img src="<%= mediaImgUrl %>" class="img-fluid rounded" alt="<%= media.altText || media.title || media.originalFilename %>">
           <div class="text-muted small mt-2">

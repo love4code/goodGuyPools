@@ -118,9 +118,20 @@
               if (p.images && p.images.length > 0) {
                 // If images is populated Media objects
                 if (typeof p.images[0] === 'object' && p.images[0].sizes) {
-                  projectImageUrl = p.images[0].sizes.medium?.fileId ? '/admin/media/image/' + p.images[0].sizes.medium.fileId :
-                                    p.images[0].sizes.large?.fileId ? '/admin/media/image/' + p.images[0].sizes.large.fileId :
-                                    p.images[0].sizes.thumbnail?.fileId ? '/admin/media/image/' + p.images[0].sizes.thumbnail.fileId : '';
+                  // Support both new (fileId) and legacy (url) formats
+                  if (p.images[0].sizes.medium?.fileId) {
+                    projectImageUrl = '/admin/media/image/' + p.images[0].sizes.medium.fileId;
+                  } else if (p.images[0].sizes.large?.fileId) {
+                    projectImageUrl = '/admin/media/image/' + p.images[0].sizes.large.fileId;
+                  } else if (p.images[0].sizes.thumbnail?.fileId) {
+                    projectImageUrl = '/admin/media/image/' + p.images[0].sizes.thumbnail.fileId;
+                  } else if (p.images[0].sizes.medium?.url) {
+                    projectImageUrl = '/public/' + p.images[0].sizes.medium.url;
+                  } else if (p.images[0].sizes.large?.url) {
+                    projectImageUrl = '/public/' + p.images[0].sizes.large.url;
+                  } else if (p.images[0].sizes.thumbnail?.url) {
+                    projectImageUrl = '/public/' + p.images[0].sizes.thumbnail.url;
+                  }
                 } else if (typeof p.images[0] === 'string') {
                   projectImageUrl = p.images[0];
                 }
