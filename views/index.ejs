@@ -5,10 +5,14 @@
   let heroBgImageUrl = '';
   if (siteSettings && siteSettings.heroBackgroundMode === 'image' && siteSettings.heroBackgroundImage) {
     if (typeof siteSettings.heroBackgroundImage === 'object' && siteSettings.heroBackgroundImage.sizes) {
-      heroBgImageUrl = siteSettings.heroBackgroundImage.sizes.large?.url || 
-                      siteSettings.heroBackgroundImage.sizes.medium?.url || 
-                      siteSettings.heroBackgroundImage.sizes.thumbnail?.url || '';
-      if (heroBgImageUrl) heroBgImageUrl = '/public/' + heroBgImageUrl;
+      // Use fileId to access via /admin/media/image/{fileId}
+      if (siteSettings.heroBackgroundImage.sizes.large?.fileId) {
+        heroBgImageUrl = '/admin/media/image/' + siteSettings.heroBackgroundImage.sizes.large.fileId;
+      } else if (siteSettings.heroBackgroundImage.sizes.medium?.fileId) {
+        heroBgImageUrl = '/admin/media/image/' + siteSettings.heroBackgroundImage.sizes.medium.fileId;
+      } else if (siteSettings.heroBackgroundImage.sizes.thumbnail?.fileId) {
+        heroBgImageUrl = '/admin/media/image/' + siteSettings.heroBackgroundImage.sizes.thumbnail.fileId;
+      }
     }
   }
   
@@ -16,10 +20,14 @@
   let heroLogoUrl = '';
   if (siteSettings && siteSettings.heroLogo) {
     if (typeof siteSettings.heroLogo === 'object' && siteSettings.heroLogo.sizes) {
-      heroLogoUrl = siteSettings.heroLogo.sizes.medium?.url || 
-                   siteSettings.heroLogo.sizes.large?.url || 
-                   siteSettings.heroLogo.sizes.thumbnail?.url || '';
-      if (heroLogoUrl) heroLogoUrl = '/public/' + heroLogoUrl;
+      // Use fileId to access via /admin/media/image/{fileId}
+      if (siteSettings.heroLogo.sizes.medium?.fileId) {
+        heroLogoUrl = '/admin/media/image/' + siteSettings.heroLogo.sizes.medium.fileId;
+      } else if (siteSettings.heroLogo.sizes.large?.fileId) {
+        heroLogoUrl = '/admin/media/image/' + siteSettings.heroLogo.sizes.large.fileId;
+      } else if (siteSettings.heroLogo.sizes.thumbnail?.fileId) {
+        heroLogoUrl = '/admin/media/image/' + siteSettings.heroLogo.sizes.thumbnail.fileId;
+      }
     }
   }
 %>

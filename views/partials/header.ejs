@@ -67,11 +67,13 @@
             if (siteConfig && siteConfig.navbarLogo) {
               // navbarLogo is a populated Media object
               if (typeof siteConfig.navbarLogo === 'object' && siteConfig.navbarLogo.sizes) {
-                logoUrl = siteConfig.navbarLogo.sizes.medium?.url || 
-                         siteConfig.navbarLogo.sizes.large?.url || 
-                         siteConfig.navbarLogo.sizes.thumbnail?.url || '';
-                if (logoUrl) {
-                  logoUrl = '/public/' + logoUrl;
+                // Use fileId to access via /admin/media/image/{fileId}
+                if (siteConfig.navbarLogo.sizes.medium?.fileId) {
+                  logoUrl = '/admin/media/image/' + siteConfig.navbarLogo.sizes.medium.fileId;
+                } else if (siteConfig.navbarLogo.sizes.large?.fileId) {
+                  logoUrl = '/admin/media/image/' + siteConfig.navbarLogo.sizes.large.fileId;
+                } else if (siteConfig.navbarLogo.sizes.thumbnail?.fileId) {
+                  logoUrl = '/admin/media/image/' + siteConfig.navbarLogo.sizes.thumbnail.fileId;
                 }
               }
             } else if (siteConfig && siteConfig.logo) {
