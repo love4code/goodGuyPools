@@ -80,6 +80,14 @@ app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   res.locals.isAuthenticated = !!req.session.userId;
+  // Add base URL for absolute URLs (needed for Open Graph)
+  const protocol = req.protocol || 'https';
+  const host =
+    req.get('host') ||
+    (process.env.SITE_URL
+      ? new URL(process.env.SITE_URL).host
+      : 'www.goodguypools.com');
+  res.locals.baseUrl = `${protocol}://${host}`;
   next();
 });
 
