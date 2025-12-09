@@ -144,11 +144,12 @@
             }
           %>
           <% if (logoUrl) { %>
-            <img src="<%= logoUrl %>" alt="<%= companyName %>" style="height: 40px; max-width: 200px; object-fit: contain; margin-right: 10px;">
+            <img src="<%= logoUrl %>" alt="<%= companyName %>" style="height: 40px; max-width: 200px; object-fit: contain;">
+          <% } else { %>
+            <span class="fw-bold" style="color: <%= headerTextColor %>;">
+              <%= companyName %>
+            </span>
           <% } %>
-          <span class="fw-bold" style="color: <%= headerTextColor %>;">
-            <%= companyName %>
-          </span>
         </a>
         <button
           class="navbar-toggler"
