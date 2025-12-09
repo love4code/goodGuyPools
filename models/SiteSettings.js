@@ -60,6 +60,22 @@ const siteSettingsSchema = new mongoose.Schema({
     backgroundColor: { type: String, default: '#ffffff' },
     textColor: { type: String, default: '#000000' },
   },
+  // Theme colors for header and footer
+  theme: {
+    header: {
+      backgroundColor: { type: String, default: '#ffffff' },
+      textColor: { type: String, default: '#0d6efd' },
+      linkColor: { type: String, default: '#000000' },
+      linkHoverColor: { type: String, default: '#0d6efd' },
+    },
+    footer: {
+      backgroundColor: { type: String, default: '#ffffff' },
+      textColor: { type: String, default: '#6c757d' },
+      linkColor: { type: String, default: '#0d6efd' },
+      linkHoverColor: { type: String, default: '#0a58ca' },
+      borderColor: { type: String, default: '#dee2e6' },
+    },
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

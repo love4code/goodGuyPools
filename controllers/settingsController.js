@@ -148,6 +148,45 @@ exports.updateSettings = async (req, res) => {
     };
   }
 
+  // Header and Footer theme colors (always save these)
+  if (!settings.theme) {
+    settings.theme = {
+      header: {},
+      footer: {},
+    };
+  }
+
+  // Update header colors
+  if (body.headerBackgroundColor) {
+    settings.theme.header.backgroundColor = body.headerBackgroundColor;
+  }
+  if (body.headerTextColor) {
+    settings.theme.header.textColor = body.headerTextColor;
+  }
+  if (body.headerLinkColor) {
+    settings.theme.header.linkColor = body.headerLinkColor;
+  }
+  if (body.headerLinkHoverColor) {
+    settings.theme.header.linkHoverColor = body.headerLinkHoverColor;
+  }
+
+  // Update footer colors
+  if (body.footerBackgroundColor) {
+    settings.theme.footer.backgroundColor = body.footerBackgroundColor;
+  }
+  if (body.footerTextColor) {
+    settings.theme.footer.textColor = body.footerTextColor;
+  }
+  if (body.footerLinkColor) {
+    settings.theme.footer.linkColor = body.footerLinkColor;
+  }
+  if (body.footerLinkHoverColor) {
+    settings.theme.footer.linkHoverColor = body.footerLinkHoverColor;
+  }
+  if (body.footerBorderColor) {
+    settings.theme.footer.borderColor = body.footerBorderColor;
+  }
+
   settings.updatedAt = new Date();
   await settings.save();
   req.flash('success', 'Settings updated');
