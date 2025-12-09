@@ -13,6 +13,9 @@ const SiteSettings = require('./models/SiteSettings');
 
 const app = express();
 
+// Trust proxy (required for Heroku and HTTPS)
+app.set('trust proxy', 1);
+
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
