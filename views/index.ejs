@@ -46,10 +46,10 @@
                 <img src="<%= heroLogoUrl %>" alt="<%= siteSettings.companyName || 'Logo' %>" style="max-height: 180px; max-width: 450px; object-fit: contain;">
               </div>
             <% } %>
-            <% if (siteSettings.tagline) { %>
+            <% if (siteSettings.tagline && !heroLogoUrl) { %>
               <h1 class="display-4 fw-bold mb-4"><%= siteSettings.tagline %></h1>
             <% } %>
-            <% if (siteSettings.companyName && !siteSettings.tagline) { %>
+            <% if (siteSettings.companyName && !siteSettings.tagline && !heroLogoUrl) { %>
               <h1 class="display-4 fw-bold mb-4"><%= siteSettings.companyName %></h1>
             <% } %>
             <a class="btn btn-primary btn-lg shadow" href="/contact">Request a Free Quote</a>
@@ -67,7 +67,9 @@
           <img src="<%= heroLogoUrl %>" alt="<%= siteSettings.companyName || 'Logo' %>" style="max-height: 180px; max-width: 450px; object-fit: contain;">
         </div>
       <% } %>
-      <h1 class="display-5 fw-bold text-primary"><%= siteSettings.companyName || 'Good Guy Pools' %></h1>
+      <% if (!heroLogoUrl) { %>
+        <h1 class="display-5 fw-bold text-primary"><%= siteSettings.companyName || 'Good Guy Pools' %></h1>
+      <% } %>
       <% if (siteSettings.tagline) { %>
         <p class="lead mb-4"><%= siteSettings.tagline %></p>
       <% } else { %>
