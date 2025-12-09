@@ -17,61 +17,68 @@ exports.newForm = (req, res) => {
 exports.create = async (req, res) => {
   try {
     // Process uploaded featured image (single file)
-    let featuredImagePath = req.body.image || '';
+    let mainImageId = null;
     if (
       req.files &&
       req.files.featuredImageUpload &&
       req.files.featuredImageUpload.length > 0
     ) {
       const featuredFile = req.files.featuredImageUpload[0];
-      if (featuredFile && featuredFile.path) {
+      if (featuredFile && featuredFile.mediaId) {
         await Media.create({
-          gridfsId: featuredFile.gridfsId,
-          filePath: featuredFile.path,
+          _id: featuredFile.mediaId,
           originalFilename: featuredFile.originalname,
           title: req.body.name || '',
           altText: '',
           tags: ['product', 'featured'],
           sizes: featuredFile.sizes || {},
         });
-        featuredImagePath = featuredFile.path;
+        mainImageId = featuredFile.mediaId;
+      }
+    } else if (req.body.mainImage && req.body.mainImage.trim() !== '') {
+      // From media picker
+      if (mongoose.Types.ObjectId.isValid(req.body.mainImage.trim())) {
+        mainImageId = req.body.mainImage.trim();
       }
     }
 
     // Process uploaded gallery images
-    const uploadedGalleryPaths = [];
+    const uploadedGalleryIds = [];
     if (
       req.files &&
       req.files.galleryImages &&
       req.files.galleryImages.length > 0
     ) {
       for (const file of req.files.galleryImages) {
-        if (file.path) {
+        if (file.mediaId) {
           // Save to Media library
           await Media.create({
-            gridfsId: file.gridfsId,
-            filePath: file.path,
+            _id: file.mediaId,
             originalFilename: file.originalname,
             title: req.body.name || '',
             altText: '',
             tags: ['product'],
             sizes: file.sizes || {},
           });
-          uploadedGalleryPaths.push(file.path);
+          uploadedGalleryIds.push(file.mediaId);
         }
       }
     }
 
-    // Combine uploaded images with manually entered paths
-    const manualGallery = Array.isArray(req.body.gallery)
-      ? req.body.gallery
-      : req.body.gallery
-      ? req.body.gallery
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-      : [];
-    const allGalleryPaths = [...uploadedGalleryPaths, ...manualGallery];
+    // Process gallery from media picker (comma-separated Media IDs)
+    const manualGalleryIds = [];
+    if (req.body.gallery && req.body.gallery.trim() !== '') {
+      const galleryIds = req.body.gallery
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      for (const id of galleryIds) {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          manualGalleryIds.push(id);
+        }
+      }
+    }
+    const allGalleryIds = [...uploadedGalleryIds, ...manualGalleryIds];
 
     const {
       name,
@@ -164,8 +171,44 @@ exports.create = async (req, res) => {
     req.flash('success', 'Product created');
     res.redirect('/admin/products');
   } catch (e) {
-    req.flash('error', e.message);
-    res.redirect('/admin/products/new');
+    console.error('Error creating product:', e);
+    req.flash('error', e.message || 'Error creating product');
+    // Preserve form data on error
+    const formData = {
+      name: req.body.name || '',
+      description: req.body.description || '',
+      shortDescription: req.body.shortDescription || '',
+      sku: req.body.sku || '',
+      category: req.body.category || '',
+      brand: req.body.brand || '',
+      material: req.body.material || '',
+      shape: req.body.shape || '',
+      depth: req.body.depth || '',
+      capacity: req.body.capacity || '',
+      dimensions: req.body.dimensions || '',
+      weight: req.body.weight || '',
+      warranty: req.body.warranty || '',
+      installationTime: req.body.installationTime || '',
+      features: req.body.features || '',
+      specifications: req.body.specifications || '',
+      priceRange: req.body.priceRange || '',
+      availability: req.body.availability || 'In Stock',
+      metaTitle: req.body.metaTitle || '',
+      metaDescription: req.body.metaDescription || '',
+      keywords: req.body.keywords || '',
+      tags: req.body.tags || '',
+      notes: req.body.notes || '',
+      isActive: req.body.isActive === 'on',
+      isFeatured: req.body.isFeatured === 'on',
+      order: req.body.order || 0,
+      mainImage: req.body.mainImage || '',
+      gallery: req.body.gallery || '',
+    };
+    res.render('admin/product-form', {
+      title: 'New Product',
+      product: formData,
+      error: e.message || 'Error creating product',
+    });
   }
 };
 

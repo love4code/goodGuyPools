@@ -26,10 +26,26 @@
         </div>
         <div class="mt-3 mt-md-0">
           <% if (siteSettings && siteSettings.social) { %>
-            <% if (siteSettings.social.facebookUrl) { %><a class="me-3" href="<%= siteSettings.social.facebookUrl %>" target="_blank">Facebook</a><% } %>
-            <% if (siteSettings.social.instagramUrl) { %><a class="me-3" href="<%= siteSettings.social.instagramUrl %>" target="_blank">Instagram</a><% } %>
-            <% if (siteSettings.social.youtubeUrl) { %><a class="me-3" href="<%= siteSettings.social.youtubeUrl %>" target="_blank">YouTube</a><% } %>
-            <% if (siteSettings.social.tiktokUrl) { %><a class="me-3" href="<%= siteSettings.social.tiktokUrl %>" target="_blank">TikTok</a><% } %>
+            <% if (siteSettings.social.facebookUrl) { %>
+              <a class="me-3" href="<%= siteSettings.social.facebookUrl %>" target="_blank" aria-label="Facebook">
+                <i class="bi bi-facebook" style="font-size: 1.5rem;"></i>
+              </a>
+            <% } %>
+            <% if (siteSettings.social.instagramUrl) { %>
+              <a class="me-3" href="<%= siteSettings.social.instagramUrl %>" target="_blank" aria-label="Instagram">
+                <i class="bi bi-instagram" style="font-size: 1.5rem;"></i>
+              </a>
+            <% } %>
+            <% if (siteSettings.social.youtubeUrl) { %>
+              <a class="me-3" href="<%= siteSettings.social.youtubeUrl %>" target="_blank" aria-label="YouTube">
+                <i class="bi bi-youtube" style="font-size: 1.5rem;"></i>
+              </a>
+            <% } %>
+            <% if (siteSettings.social.tiktokUrl) { %>
+              <a class="me-3" href="<%= siteSettings.social.tiktokUrl %>" target="_blank" aria-label="TikTok">
+                <i class="bi bi-tiktok" style="font-size: 1.5rem;"></i>
+              </a>
+            <% } %>
           <% } %>
           <a href="/admin/login">Login</a>
         </div>

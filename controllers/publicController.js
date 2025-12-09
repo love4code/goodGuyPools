@@ -2,6 +2,7 @@ const Project = require('../models/Project');
 const Contact = require('../models/Contact');
 const SiteSettings = require('../models/SiteSettings');
 const Service = require('../models/Service');
+const Product = require('../models/Product');
 const { sendContactEmail } = require('../utils/email');
 
 async function getSettings () {
@@ -26,12 +27,17 @@ exports.getHome = async (req, res) => {
     const projects = await Project.find({ isFeatured: true })
       .populate('images')
       .sort({ createdAt: -1 })
-      .limit(8);
+      .limit(4);
+    const products = await Product.find({ isActive: true })
+      .populate('mainImage')
+      .sort({ order: 1, createdAt: -1 })
+      .limit(6);
     res.render('index', {
       title: 'Home',
       siteSettings,
       services,
       projects,
+      products,
       errors: null,
       success: false,
     });
@@ -41,6 +47,7 @@ exports.getHome = async (req, res) => {
       siteSettings: await getSettings(),
       services: [],
       projects: [],
+      products: [],
       errors: null,
       success: false,
     });

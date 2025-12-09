@@ -143,7 +143,7 @@
   </div>
   <div class="col-md-6">
     <label class="form-label">Available Sizes (comma separated)</label>
-    <input type="text" name="sizes" class="form-control" placeholder="12x24, 14x28, 16x32" value="<%= product && product.sizes ? product.sizes.join(', ') : '' %>">
+    <input type="text" name="sizes" class="form-control" placeholder="12x24, 14x28, 16x32" value="<%= product && product.sizes ? (Array.isArray(product.sizes) ? product.sizes.join(', ') : product.sizes) : '' %>">
     <small class="text-muted">These will appear as selectable tags on the product page</small>
   </div>
   <div class="col-md-6">
@@ -152,7 +152,7 @@
   </div>
   <div class="col-md-12">
     <label class="form-label">Features (comma separated)</label>
-    <input type="text" name="features" class="form-control" placeholder="LED Lighting, Heating System, Salt Water System" value="<%= product && product.features ? product.features.join(', ') : '' %>">
+    <input type="text" name="features" class="form-control" placeholder="LED Lighting, Heating System, Salt Water System" value="<%= product && product.features ? (Array.isArray(product.features) ? product.features.join(', ') : product.features) : '' %>">
   </div>
   <div class="col-md-12">
     <label class="form-label">Technical Specifications (HTML allowed)</label>
@@ -195,11 +195,11 @@
   </div>
   <div class="col-md-6">
     <label class="form-label">SEO Keywords (comma separated)</label>
-    <input type="text" name="keywords" class="form-control" placeholder="pool, swimming, fiberglass" value="<%= product && product.keywords ? product.keywords.join(', ') : '' %>">
+    <input type="text" name="keywords" class="form-control" placeholder="pool, swimming, fiberglass" value="<%= product && product.keywords ? (Array.isArray(product.keywords) ? product.keywords.join(', ') : product.keywords) : '' %>">
   </div>
   <div class="col-md-6">
     <label class="form-label">Product Tags (comma separated)</label>
-    <input type="text" name="tags" class="form-control" placeholder="premium, featured, new" value="<%= product && product.tags ? product.tags.join(', ') : '' %>">
+    <input type="text" name="tags" class="form-control" placeholder="premium, featured, new" value="<%= product && product.tags ? (Array.isArray(product.tags) ? product.tags.join(', ') : product.tags) : '' %>">
   </div>
 
   <!-- Status & Settings -->
