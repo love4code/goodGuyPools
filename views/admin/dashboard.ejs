@@ -162,6 +162,78 @@
   </div>
 </div>
 
+<!-- Profit Charts Section -->
+<div class="row g-4 mb-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Profit Analytics</h2>
+        <div class="d-flex gap-2 align-items-center">
+          <select id="filterCustomer" class="form-select form-select-sm" style="width: 200px;">
+            <option value="">All Customers</option>
+            <% if (customers && customers.length) { %>
+              <% customers.forEach(c => { %>
+                <option value="<%= c._id %>"><%= c.name %></option>
+              <% }) %>
+            <% } %>
+          </select>
+          <select id="filterSale" class="form-select form-select-sm" style="width: 200px;">
+            <option value="">All Sales</option>
+            <% if (allSales && allSales.length) { %>
+              <% allSales.forEach(s => { %>
+                <option value="<%= s._id %>">
+                  <%= s.customer ? s.customer.name : 'N/A' %> - <%= new Date(s.saleDate).toLocaleDateString() %>
+                </option>
+              <% }) %>
+            <% } %>
+          </select>
+          <select id="filterYear" class="form-select form-select-sm" style="width: 120px;">
+            <option value="">All Years</option>
+            <% 
+              const currentYear = new Date().getFullYear();
+              for (let y = currentYear; y >= currentYear - 5; y--) { %>
+              <option value="<%= y %>"><%= y %></option>
+            <% } %>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">Clear Filters</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="nav nav-tabs mb-3" id="chartTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab">
+              Monthly Profit
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="yearly-tab" data-bs-toggle="tab" data-bs-target="#yearly" type="button" role="tab">
+              Yearly Profit
+            </button>
+          </li>
+        </ul>
+        <div class="tab-content" id="chartTabsContent">
+          <div class="tab-pane fade show active" id="monthly" role="tabpanel">
+            <div id="monthlyChartContainer">
+              <canvas id="monthlyProfitChart" height="80"></canvas>
+            </div>
+            <div id="monthlyNoData" class="text-center text-muted p-4" style="display: none;">
+              No profit data available for the selected filters.
+            </div>
+          </div>
+          <div class="tab-pane fade" id="yearly" role="tabpanel">
+            <div id="yearlyChartContainer">
+              <canvas id="yearlyProfitChart" height="80"></canvas>
+            </div>
+            <div id="yearlyNoData" class="text-center text-muted p-4" style="display: none;">
+              No profit data available for the selected filters.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-4 mt-2">
   <div class="col-md-6">
     <div class="card">
@@ -258,5 +330,247 @@
     </div>
   </div>
 </div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  let monthlyChart = null;
+  let yearlyChart = null;
+  
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // Load charts on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadMonthlyChart();
+    loadYearlyChart();
+    
+    // Add event listeners for filters
+    document.getElementById('filterCustomer').addEventListener('change', updateCharts);
+    document.getElementById('filterSale').addEventListener('change', updateCharts);
+    document.getElementById('filterYear').addEventListener('change', updateCharts);
+    
+    // Update charts when switching tabs
+    document.getElementById('monthly-tab').addEventListener('shown.bs.tab', function() {
+      if (!monthlyChart) loadMonthlyChart();
+    });
+    document.getElementById('yearly-tab').addEventListener('shown.bs.tab', function() {
+      if (!yearlyChart) loadYearlyChart();
+    });
+  });
+  
+  function getFilterParams() {
+    return {
+      customerId: document.getElementById('filterCustomer').value || '',
+      saleId: document.getElementById('filterSale').value || '',
+      year: document.getElementById('filterYear').value || '',
+    };
+  }
+  
+  function clearFilters() {
+    document.getElementById('filterCustomer').value = '';
+    document.getElementById('filterSale').value = '';
+    document.getElementById('filterYear').value = '';
+    updateCharts();
+  }
+  
+  function updateCharts() {
+    if (monthlyChart) {
+      loadMonthlyChart();
+    }
+    if (yearlyChart) {
+      loadYearlyChart();
+    }
+  }
+  
+  async function loadMonthlyChart() {
+    const params = getFilterParams();
+    const queryString = new URLSearchParams(params).toString();
+    
+    try {
+      const response = await fetch(`/admin/api/profit-by-month?${queryString}`);
+      const data = await response.json();
+      
+      // Process data for chart
+      const labels = [];
+      const profits = [];
+      
+      // Get all months in the data range
+      const monthsMap = new Map();
+      data.forEach(item => {
+        const key = `${item._id.year}-${item._id.month}`;
+        monthsMap.set(key, item.totalProfit);
+      });
+      
+      // Determine date range
+      let startYear = params.year ? parseInt(params.year) : new Date().getFullYear() - 1;
+      let endYear = params.year ? parseInt(params.year) : new Date().getFullYear();
+      
+      if (!params.year) {
+        // Find min/max years from data
+        if (data.length > 0) {
+          startYear = Math.min(...data.map(d => d._id.year));
+          endYear = Math.max(...data.map(d => d._id.year));
+        }
+      }
+      
+      // Generate labels and data
+      if (params.year) {
+        // If year is specified, show all 12 months for that year
+        for (let month = 1; month <= 12; month++) {
+          const key = `${startYear}-${month}`;
+          labels.push(`${monthNames[month - 1]} ${startYear}`);
+          profits.push(monthsMap.get(key) || 0);
+        }
+      } else {
+        // Show all months in the data range
+        for (let year = startYear; year <= endYear; year++) {
+          for (let month = 1; month <= 12; month++) {
+            const key = `${year}-${month}`;
+            if (monthsMap.has(key)) {
+              labels.push(`${monthNames[month - 1]} ${year}`);
+              profits.push(monthsMap.get(key) || 0);
+            }
+          }
+        }
+      }
+      
+      // Show/hide no data message
+      const hasData = labels.length > 0 && profits.some(p => p !== 0);
+      document.getElementById('monthlyChartContainer').style.display = hasData ? 'block' : 'none';
+      document.getElementById('monthlyNoData').style.display = hasData ? 'none' : 'block';
+      
+      if (!hasData) {
+        if (monthlyChart) {
+          monthlyChart.destroy();
+          monthlyChart = null;
+        }
+        return;
+      }
+      
+      const ctx = document.getElementById('monthlyProfitChart');
+      if (monthlyChart) {
+        monthlyChart.destroy();
+      }
+      
+      monthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Profit ($)',
+            data: profits,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Profit: $' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error loading monthly chart:', error);
+    }
+  }
+  
+  async function loadYearlyChart() {
+    const params = getFilterParams();
+    const queryString = new URLSearchParams(params).toString();
+    
+    try {
+      const response = await fetch(`/admin/api/profit-by-year?${queryString}`);
+      const data = await response.json();
+      
+      // Process data for chart
+      const labels = data.map(item => item._id.toString());
+      const profits = data.map(item => item.totalProfit || 0);
+      
+      // Show/hide no data message
+      const hasData = labels.length > 0 && profits.some(p => p !== 0);
+      document.getElementById('yearlyChartContainer').style.display = hasData ? 'block' : 'none';
+      document.getElementById('yearlyNoData').style.display = hasData ? 'none' : 'block';
+      
+      if (!hasData) {
+        if (yearlyChart) {
+          yearlyChart.destroy();
+          yearlyChart = null;
+        }
+        return;
+      }
+      
+      const ctx = document.getElementById('yearlyProfitChart');
+      if (yearlyChart) {
+        yearlyChart.destroy();
+      }
+      
+      yearlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Profit ($)',
+            data: profits,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Profit: $' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error loading yearly chart:', error);
+    }
+  }
+</script>
 
 <%- include('../partials/admin-footer') %>

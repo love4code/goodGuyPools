@@ -21,6 +21,12 @@ router.get('/logout', adminController.getLogout);
 
 // Dashboard
 router.get('/', requireAuth, adminController.getDashboard);
+router.get(
+  '/api/profit-by-month',
+  requireAuth,
+  adminController.getProfitByMonth,
+);
+router.get('/api/profit-by-year', requireAuth, adminController.getProfitByYear);
 
 // Projects
 router.get('/projects', requireAuth, projectController.list);

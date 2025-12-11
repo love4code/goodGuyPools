@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const AdminUser = require('../models/AdminUser');
 const Project = require('../models/Project');
 const Contact = require('../models/Contact');
@@ -94,6 +95,14 @@ exports.getDashboard = async (req, res) => {
     .sort({ saleDate: -1 })
     .limit(5);
 
+  // Get all customers and sales for filter dropdowns
+  const customers = await Customer.find().sort({ name: 1 }).select('_id name');
+  const allSales = await Sale.find()
+    .sort({ saleDate: -1 })
+    .select('_id saleDate customer')
+    .populate('customer', 'name')
+    .limit(100);
+
   res.render('admin/dashboard', {
     title: 'Admin Dashboard',
     stats: {
@@ -110,5 +119,71 @@ exports.getDashboard = async (req, res) => {
     },
     recentInquiries,
     recentSales,
+    customers,
+    allSales,
   });
+};
+
+// API endpoint for profit data by month
+exports.getProfitByMonth = async (req, res) => {
+  try {
+    const { customerId, saleId, year } = req.query;
+
+    const matchStage = {};
+    if (customerId) matchStage.customer = mongoose.Types.ObjectId(customerId);
+    if (saleId) matchStage._id = mongoose.Types.ObjectId(saleId);
+    if (year) {
+      const startDate = new Date(`${year}-01-01`);
+      const endDate = new Date(`${year}-12-31T23:59:59`);
+      matchStage.saleDate = { $gte: startDate, $lte: endDate };
+    }
+
+    const profitData = await Sale.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$saleDate' },
+            month: { $month: '$saleDate' },
+          },
+          totalProfit: { $sum: { $ifNull: ['$profit', 0] } },
+          saleCount: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+    ]);
+
+    res.json(profitData);
+  } catch (error) {
+    console.error('Error fetching profit by month:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// API endpoint for profit data by year
+exports.getProfitByYear = async (req, res) => {
+  try {
+    const { customerId, saleId } = req.query;
+
+    const matchStage = {};
+    if (customerId) matchStage.customer = mongoose.Types.ObjectId(customerId);
+    if (saleId) matchStage._id = mongoose.Types.ObjectId(saleId);
+
+    const profitData = await Sale.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: { $year: '$saleDate' },
+          totalProfit: { $sum: { $ifNull: ['$profit', 0] } },
+          saleCount: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    res.json(profitData);
+  } catch (error) {
+    console.error('Error fetching profit by year:', error);
+    res.status(500).json({ error: error.message });
+  }
 };
