@@ -14,6 +14,18 @@ router.post('/contact', inquiryController.createContactInquiry);
 // Products
 router.get('/products', productController.publicList);
 router.get('/products/:slug', productController.publicDetail);
-router.post('/products/:slug/inquiry', inquiryController.createProductInquiry);
+
+// Log all POST requests to inquiry route
+router.post(
+  '/products/:slug/inquiry',
+  (req, res, next) => {
+    console.log('\n\n=== ROUTE HIT: /products/:slug/inquiry ===');
+    console.log('Slug:', req.params.slug);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('==========================================\n\n');
+    next();
+  },
+  inquiryController.createProductInquiry,
+);
 
 module.exports = router;

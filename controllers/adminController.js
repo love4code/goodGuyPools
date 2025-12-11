@@ -95,6 +95,10 @@ exports.getDashboard = async (req, res) => {
     .sort({ saleDate: -1 })
     .limit(5);
 
+  // Get recent contacts
+  const Contact = require('../models/Contact');
+  const recentContacts = await Contact.find().sort({ createdAt: -1 }).limit(10);
+
   // Get all customers and sales for filter dropdowns
   const customers = await Customer.find().sort({ name: 1 }).select('_id name');
   const allSales = await Sale.find()
@@ -119,6 +123,7 @@ exports.getDashboard = async (req, res) => {
     },
     recentInquiries,
     recentSales,
+    recentContacts,
     customers,
     allSales,
   });

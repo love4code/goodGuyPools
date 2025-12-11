@@ -28,6 +28,32 @@ router.get(
 );
 router.get('/api/profit-by-year', requireAuth, adminController.getProfitByYear);
 
+// Debug endpoint to check inquiries
+router.get('/debug/inquiries', requireAuth, async (req, res) => {
+  const Inquiry = require('../models/Inquiry');
+  const mongoose = require('mongoose');
+
+  console.log('=== DEBUG: Checking inquiries ===');
+  console.log(
+    'Database state:',
+    mongoose.connection.readyState === 1 ? 'Connected' : 'Not connected',
+  );
+  console.log('Database name:', mongoose.connection.name);
+
+  const count = await Inquiry.countDocuments();
+  console.log('Total inquiries:', count);
+
+  const allInquiries = await Inquiry.find({}).lean().limit(10);
+  console.log('Sample inquiries:', JSON.stringify(allInquiries, null, 2));
+
+  res.json({
+    databaseConnected: mongoose.connection.readyState === 1,
+    databaseName: mongoose.connection.name,
+    totalInquiries: count,
+    sampleInquiries: allInquiries,
+  });
+});
+
 // Projects
 router.get('/projects', requireAuth, projectController.list);
 router.get('/projects/new', requireAuth, projectController.newForm);

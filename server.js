@@ -21,23 +21,23 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Redirect to www and force HTTPS (production only)
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    const host = req.headers.host;
-    const shouldBe = 'www.goodguypools.com';
+// if (process.env.NODE_ENV === 'production') {
+//   app.use((req, res, next) => {
+//     const host = req.headers.host;
+//     const shouldBe = 'www.goodguypools.com';
 
-    if (host !== shouldBe) {
-      return res.redirect(301, `https://${shouldBe}${req.url}`);
-    }
+//     if (host !== shouldBe) {
+//       return res.redirect(301, `https://${shouldBe}${req.url}`);
+//     }
 
-    // optionally also force https if you're terminating SSL at Heroku:
-    if (req.headers['x-forwarded-proto'] !== 'https') {
-      return res.redirect(301, `https://${host}${req.url}`);
-    }
+//     // optionally also force https if you're terminating SSL at Heroku:
+//     if (req.headers['x-forwarded-proto'] !== 'https') {
+//       return res.redirect(301, `https://${host}${req.url}`);
+//     }
 
-    next();
-  });
-}
+//     next();
+//   });
+// }
 
 // Static
 app.use('/public', express.static(path.join(__dirname, 'public')));
@@ -125,6 +125,19 @@ app.use(trackPageView);
 // Routes
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
+
+// Debug middleware - log all POST requests
+app.use((req, res, next) => {
+  if (req.method === 'POST') {
+    console.log('\n=== POST REQUEST ===');
+    console.log('URL:', req.url);
+    console.log('Path:', req.path);
+    console.log('Body keys:', Object.keys(req.body || {}));
+    console.log('===================\n');
+  }
+  next();
+});
+
 app.use('/', publicRoutes);
 app.use('/admin', adminRoutes);
 
