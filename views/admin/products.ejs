@@ -3,6 +3,12 @@
   <h2 class="h4 mb-0">Products</h2>
   <a href="/admin/products/new" class="btn btn-primary">New Product</a>
 </div>
+<div class="mb-3">
+  <div class="input-group" style="max-width: 400px;">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input type="text" id="productSearch" class="form-control" placeholder="Search products by name, description, or sizes...">
+  </div>
+</div>
 <div class="table-responsive">
   <table class="table align-middle">
     <thead>
@@ -20,21 +26,33 @@
     <tbody>
       <% if (products && products.length) { %> 
         <% products.forEach(p => { %>
-          <tr>
+          <tr class="product-row" data-product-name="<%= (p.name || '').toLowerCase() %>" data-product-description="<%= ((p.shortDescription || p.description || '').replace(/<[^>]*>/g, '')).toLowerCase() %>" data-product-sizes="<%= (p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : '').toLowerCase() %>">
             <td>
               <% 
                 let productThumbUrl = '';
                 if (p.mainImage) {
-                  if (typeof p.mainImage === 'object' && p.mainImage.sizes) {
-                    productThumbUrl = p.mainImage.sizes.thumbnail?.fileId ? '/admin/media/image/' + p.mainImage.sizes.thumbnail.fileId :
-                                      p.mainImage.sizes.medium?.fileId ? '/admin/media/image/' + p.mainImage.sizes.medium.fileId : '';
+                  // Handle populated mainImage object
+                  if (typeof p.mainImage === 'object' && p.mainImage !== null) {
+                    if (p.mainImage.sizes) {
+                      // Has sizes object (new format)
+                      productThumbUrl = p.mainImage.sizes.thumbnail?.fileId ? '/admin/media/image/' + p.mainImage.sizes.thumbnail.fileId :
+                                        p.mainImage.sizes.medium?.fileId ? '/admin/media/image/' + p.mainImage.sizes.medium.fileId :
+                                        p.mainImage.sizes.large?.fileId ? '/admin/media/image/' + p.mainImage.sizes.large.fileId : '';
+                    } else if (p.mainImage._id) {
+                      // Just an ObjectId reference, use it directly
+                      productThumbUrl = '/admin/media/image/' + p.mainImage._id;
+                    }
+                  } else if (typeof p.mainImage === 'string') {
+                    // String ID, use it directly
+                    productThumbUrl = '/admin/media/image/' + p.mainImage;
                   }
                 } else if (p.image) {
+                  // Legacy image field
                   productThumbUrl = p.image;
                 }
               %>
               <% if (productThumbUrl) { %>
-                <img src="<%= productThumbUrl %>" style="width:60px;height:60px;object-fit:cover" class="img-thumbnail">
+                <img src="<%= productThumbUrl %>" style="width:60px;height:60px;object-fit:cover" class="img-thumbnail" alt="<%= p.name %>">
               <% } else { %>
                 <span class="text-muted">No image</span>
               <% } %>
@@ -68,12 +86,64 @@
           </tr>
         <% }) %> 
       <% } else { %>
-        <tr>
+        <tr id="noProductsRow">
           <td colspan="8" class="text-center text-muted">No products yet.</td>
         </tr>
       <% } %>
     </tbody>
   </table>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('productSearch');
+    const productRows = document.querySelectorAll('.product-row');
+    const noProductsRow = document.getElementById('noProductsRow');
+    const tbody = document.querySelector('tbody');
+    
+    if (searchInput && productRows.length > 0) {
+      // Create a "no results" row if it doesn't exist
+      let noResultsRow = document.getElementById('noResultsRow');
+      if (!noResultsRow) {
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.style.display = 'none';
+        noResultsRow.innerHTML = '<td colspan="8" class="text-center text-muted">No products found matching your search.</td>';
+        tbody.appendChild(noResultsRow);
+      }
+      
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+        
+        productRows.forEach(row => {
+          const name = row.getAttribute('data-product-name') || '';
+          const description = row.getAttribute('data-product-description') || '';
+          const sizes = row.getAttribute('data-product-sizes') || '';
+          
+          const matches = searchTerm === '' || 
+            name.includes(searchTerm) || 
+            description.includes(searchTerm) || 
+            sizes.includes(searchTerm);
+          
+          if (matches) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+        
+        // Show/hide "No results" message
+        if (visibleCount === 0 && searchTerm !== '') {
+          noResultsRow.style.display = '';
+          if (noProductsRow) noProductsRow.style.display = 'none';
+        } else {
+          noResultsRow.style.display = 'none';
+          if (noProductsRow) noProductsRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+      });
+    }
+  });
+</script>
 <%- include('../partials/admin-footer') %>
 

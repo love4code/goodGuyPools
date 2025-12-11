@@ -8,6 +8,8 @@ const Service = require('../models/Service');
 const Media = require('../models/Media');
 const PageView = require('../models/PageView');
 const SiteSettings = require('../models/SiteSettings');
+const Customer = require('../models/Customer');
+const Sale = require('../models/Sale');
 
 exports.getLogin = (req, res) => {
   if (req.session.userId) return res.redirect('/admin');
@@ -53,9 +55,43 @@ exports.getDashboard = async (req, res) => {
   const serviceCount = await Service.countDocuments();
   const mediaCount = await Media.countDocuments();
   const inquiryCount = await Inquiry.countDocuments();
+  const customerCount = await Customer.countDocuments();
+  const saleCount = await Sale.countDocuments();
+  const totalSalesAmount = await Sale.aggregate([
+    {
+      $addFields: {
+        normalizedTotal: { $ifNull: ['$total', '$amount'] },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$normalizedTotal' } } },
+  ]);
+  const paidSalesAmount = await Sale.aggregate([
+    { $match: { isPaid: true } },
+    {
+      $addFields: {
+        normalizedTotal: { $ifNull: ['$total', '$amount'] },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$normalizedTotal' } } },
+  ]);
+  const unpaidSalesAmount = await Sale.aggregate([
+    { $match: { isPaid: false } },
+    {
+      $addFields: {
+        normalizedTotal: { $ifNull: ['$total', '$amount'] },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$normalizedTotal' } } },
+  ]);
   const recentInquiries = await Inquiry.find()
     .populate('product', 'name slug')
     .sort({ createdAt: -1 })
+    .limit(5);
+  const recentSales = await Sale.find()
+    .populate('customer', 'name')
+    .populate('product', 'name')
+    .populate('lineItems.product', 'name')
+    .sort({ saleDate: -1 })
     .limit(5);
 
   res.render('admin/dashboard', {
@@ -66,7 +102,13 @@ exports.getDashboard = async (req, res) => {
       serviceCount,
       mediaCount,
       inquiryCount,
+      customerCount,
+      saleCount,
+      totalSalesAmount: totalSalesAmount[0]?.total || 0,
+      paidSalesAmount: paidSalesAmount[0]?.total || 0,
+      unpaidSalesAmount: unpaidSalesAmount[0]?.total || 0,
     },
     recentInquiries,
+    recentSales,
   });
 };

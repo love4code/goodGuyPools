@@ -145,4 +145,3 @@ exports.createContactInquiry = async (req, res) => {
     res.redirect('back');
   }
 };
-

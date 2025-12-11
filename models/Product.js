@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema({
   },
   sizes: { type: [String], default: [] }, // e.g., ['12ft', '15ft', '18ft']
   price: { type: String, default: '' }, // Optional price
+  cost: { type: Number, default: 0 }, // Product cost for profit tracking
 
   // Product Metadata
   sku: { type: String, default: '' }, // Product SKU/Code
@@ -53,8 +54,9 @@ const productSchema = new mongoose.Schema({
     default: [],
   }, // Related products
 
-  isActive: { type: Boolean, default: true },
+  isActive: { type: Boolean, default: false },
   isFeatured: { type: Boolean, default: false },
+  isTaxable: { type: Boolean, default: true }, // Whether product is subject to sales tax
   order: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

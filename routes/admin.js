@@ -11,6 +11,8 @@ const serviceController = require('../controllers/serviceController');
 const productController = require('../controllers/productController');
 const productQuoteController = require('../controllers/productQuoteController');
 const inquiryController = require('../controllers/inquiryController');
+const customerController = require('../controllers/customerController');
+const saleController = require('../controllers/saleController');
 
 // Auth
 router.get('/login', adminController.getLogin);
@@ -133,6 +135,8 @@ router.post('/services/:id/delete', requireAuth, serviceController.remove);
 
 // Products CRUD
 router.get('/products', requireAuth, productController.list);
+router.get('/products/api/list', requireAuth, productController.apiList);
+router.post('/products/api/create', requireAuth, productController.apiCreate);
 router.get('/products/new', requireAuth, productController.newForm);
 router.post(
   '/products',
@@ -161,5 +165,23 @@ router.post('/products/:id/delete', requireAuth, productController.remove);
 router.get('/inquiries', requireAuth, inquiryController.list);
 router.get('/inquiries/:id', requireAuth, inquiryController.detail);
 router.post('/inquiries/:id/delete', requireAuth, inquiryController.remove);
+
+// Customers CRUD
+router.get('/customers', requireAuth, customerController.list);
+router.get('/customers/new', requireAuth, customerController.newForm);
+router.post('/customers', requireAuth, customerController.create);
+router.get('/customers/:id', requireAuth, customerController.detail);
+router.get('/customers/:id/edit', requireAuth, customerController.editForm);
+router.post('/customers/:id', requireAuth, customerController.update);
+router.post('/customers/:id/delete', requireAuth, customerController.remove);
+
+// Sales CRUD
+router.get('/sales', requireAuth, saleController.list);
+router.get('/sales/new', requireAuth, saleController.newForm);
+router.post('/sales', requireAuth, saleController.create);
+router.get('/sales/:id', requireAuth, saleController.detail);
+router.get('/sales/:id/edit', requireAuth, saleController.editForm);
+router.post('/sales/:id', requireAuth, saleController.update);
+router.post('/sales/:id/delete', requireAuth, saleController.remove);
 
 module.exports = router;

@@ -84,6 +84,12 @@
           <a class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
             <i class="bi bi-envelope"></i> Customer Inquiries
           </a>
+          <a class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'customers' ? 'active' : '' %>" href="/admin/customers">
+            <i class="bi bi-people"></i> Customers
+          </a>
+          <a class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'sales' ? 'active' : '' %>" href="/admin/sales">
+            <i class="bi bi-cash-stack"></i> Sales
+          </a>
           <a class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'settings' ? 'active' : '' %>" href="/admin/settings">
             <i class="bi bi-gear"></i> Settings
           </a>
@@ -100,12 +106,19 @@
             </div>
           <% }) %>
         <% } %>
-        <% if (error && error.length) { %>
-          <% error.forEach(msg => { %>
+        <% if (error) { %>
+          <% if (Array.isArray(error)) { %>
+            <% error.forEach(msg => { %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            <% }) %>
+          <% } else { %>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <%= msg %>
+              <%= error %>
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-          <% }) %>
+          <% } %>
         <% } %>
 

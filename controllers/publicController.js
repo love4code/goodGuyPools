@@ -31,7 +31,7 @@ exports.getHome = async (req, res) => {
     const products = await Product.find({ isActive: true })
       .populate('mainImage')
       .sort({ order: 1, createdAt: -1 })
-      .limit(6);
+      .limit(4);
     res.render('index', {
       title: 'Home',
       siteSettings,

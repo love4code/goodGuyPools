@@ -1,0 +1,676 @@
+<%- include('../partials/admin-header', { title: sale ? 'Edit Sale' : 'New Sale', currentPage: 'sales' }) %>
+<div class="mb-3">
+  <a href="<%= sale ? '/admin/sales/' + sale._id : '/admin/sales' %>" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+</div>
+<form action="<%= sale ? '/admin/sales/' + sale._id : '/admin/sales' %>" method="POST" class="row g-3" id="saleForm">
+  <div class="col-md-6">
+    <label class="form-label">Customer *</label>
+    <select name="customer" class="form-select" required>
+      <option value="">Select a customer...</option>
+      <% customers.forEach(c => { %>
+        <option value="<%= c._id %>" <%= (sale && sale.customer && sale.customer.toString() === c._id.toString()) || (typeof customerId !== 'undefined' && customerId === c._id.toString()) ? 'selected' : '' %>>
+          <%= c.name %><%= c.email ? ' (' + c.email + ')' : '' %>
+        </option>
+      <% }) %>
+    </select>
+    <div class="form-text">
+      <a href="/admin/customers/new" target="_blank">Add new customer</a>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Sale Date *</label>
+    <input type="date" name="saleDate" class="form-control" value="<%= sale ? new Date(sale.saleDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" required>
+  </div>
+  
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Products</h5>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProductRow()">
+        <i class="bi bi-plus-circle"></i> Add Product
+      </button>
+    </div>
+    <div id="productRows">
+      <% if (sale && sale.lineItems && sale.lineItems.length > 0) { %>
+        <% sale.lineItems.forEach((item, index) => { %>
+          <div class="row g-3 mb-3 product-row border rounded p-3">
+            <div class="col-md-5">
+              <label class="form-label">Product *</label>
+              <div class="position-relative">
+                <input type="text" class="form-control product-search-input" placeholder="Type to search products..." autocomplete="off" data-product-id="<%= item.product ? (item.product._id ? item.product._id.toString() : item.product.toString()) : '' %>" data-product-name="<%= item.product && item.product.name ? item.product.name : '' %>" value="<%= item.product && item.product.name ? item.product.name : '' %>">
+                <input type="hidden" name="lineItems[product][]" class="product-select-hidden" value="<%= item.product ? (item.product._id ? item.product._id.toString() : item.product.toString()) : '' %>" required>
+                <div class="product-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
+                </div>
+              </div>
+              <div class="form-text">
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="openAddProductModal()">
+                  <i class="bi bi-plus-circle"></i> Add new product
+                </button>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Quantity *</label>
+              <input type="number" name="lineItems[quantity][]" class="form-control quantity-input" min="1" step="1" value="<%= item.quantity || 1 %>" required onchange="calculateRowTotal(this)">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Unit Price *</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" name="lineItems[unitPrice][]" class="form-control unit-price-input" step="0.01" min="0" value="<%= item.unitPrice || 0 %>" required onchange="calculateRowTotal(this)">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Subtotal</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="text" class="form-control row-subtotal" value="<%= ((item.quantity || 1) * (item.unitPrice || 0)).toFixed(2) %>" readonly>
+              </div>
+            </div>
+            <div class="col-12 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProductRow(this)">
+                <i class="bi bi-trash"></i> Remove
+              </button>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+          <div class="row g-3 mb-3 product-row border rounded p-3">
+            <div class="col-md-5">
+              <label class="form-label">Product *</label>
+              <div class="position-relative">
+                <input type="text" class="form-control product-search-input" placeholder="Type to search products..." autocomplete="off" data-product-id="" data-product-name="">
+                <input type="hidden" name="lineItems[product][]" class="product-select-hidden" value="" required>
+                <div class="product-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
+                </div>
+              </div>
+              <div class="form-text">
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="openAddProductModal()">
+                  <i class="bi bi-plus-circle"></i> Add new product
+                </button>
+              </div>
+            </div>
+          <div class="col-md-2">
+            <label class="form-label">Quantity *</label>
+            <input type="number" name="lineItems[quantity][]" class="form-control quantity-input" min="1" step="1" value="1" required onchange="calculateRowTotal(this)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Unit Price *</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" name="lineItems[unitPrice][]" class="form-control unit-price-input" step="0.01" min="0" value="0" required onchange="calculateRowTotal(this)">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Subtotal</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control row-subtotal" value="0.00" readonly>
+            </div>
+          </div>
+          <div class="col-12 text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProductRow(this)">
+              <i class="bi bi-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card bg-light">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 offset-md-6">
+            <div class="d-flex justify-content-between mb-2">
+              <strong>Subtotal:</strong>
+              <span id="subtotal">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <strong>Sales Tax (6.25% on taxable items):</strong>
+              <span id="taxAmount">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <strong>Total Cost:</strong>
+              <span id="totalCost">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <strong>Delivery Fee (Optional):</strong>
+              <div class="input-group" style="width: 150px;">
+                <span class="input-group-text">$</span>
+                <input type="number" name="deliveryFee" id="deliveryFee" class="form-control form-control-sm" step="0.01" min="0" value="<%= sale ? (sale.deliveryFee || 0) : 0 %>" placeholder="0.00" onchange="calculateTotals()">
+              </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between mb-2">
+              <strong class="h5">Total:</strong>
+              <span class="h5 text-primary" id="total">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <strong class="h5" id="profitLabel">Profit:</strong>
+              <span class="h5" id="profit">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="isPaid" id="isPaid" <%= sale && sale.isPaid ? 'checked' : '' %>>
+      <label class="form-check-label" for="isPaid">
+        Sale has been paid for
+      </label>
+    </div>
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Notes</label>
+    <textarea name="notes" rows="4" class="form-control"><%= sale ? sale.notes : '' %></textarea>
+  </div>
+  <div class="col-12">
+    <button type="submit" class="btn btn-primary"><%= sale ? 'Save Changes' : 'Create Sale' %></button>
+    <a href="<%= sale ? '/admin/sales/' + sale._id : '/admin/sales' %>" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+  const products = <%- JSON.stringify(products.map(p => ({ _id: p._id.toString(), name: p.name, price: p.price || '', cost: p.cost || 0, isTaxable: p.isTaxable !== false }))) %>;
+  const TAX_RATE = 0.0625;
+  
+  // Store product prices, costs, and taxable status for quick lookup
+  const productPrices = {};
+  const productCosts = {};
+  const productTaxable = {};
+  products.forEach(p => {
+    if (p.price) {
+      // Extract numeric value from price string (remove $, commas, etc.)
+      const numericPrice = parseFloat(p.price.toString().replace(/[^0-9.-]/g, ''));
+      if (!isNaN(numericPrice)) {
+        productPrices[p._id] = numericPrice;
+      }
+    }
+    productCosts[p._id] = p.cost || 0;
+    productTaxable[p._id] = p.isTaxable !== false; // Default to true if not set
+  });
+
+  async function addProductRow() {
+    const rowsContainer = document.getElementById('productRows');
+    const newRow = document.createElement('div');
+    newRow.className = 'row g-3 mb-3 product-row border rounded p-3';
+    const returnTo = window.location.pathname + window.location.search;
+    
+    // Fetch current product list
+    let productOptions = '';
+    try {
+      const response = await fetch('/admin/products/api/list');
+      const currentProducts = await response.json();
+      productOptions = currentProducts.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
+      // Update products array, productPrices, productCosts and productTaxable with new products
+      currentProducts.forEach(product => {
+        // Update products array
+        const existingIndex = products.findIndex(p => p._id === product._id);
+        if (existingIndex >= 0) {
+          products[existingIndex] = { _id: product._id, name: product.name, price: product.price || '', cost: product.cost || 0, isTaxable: product.isTaxable !== false };
+        } else {
+          products.push({ _id: product._id, name: product.name, price: product.price || '', cost: product.cost || 0, isTaxable: product.isTaxable !== false });
+        }
+        
+        // Update prices and costs
+        if (product.price) {
+          const numericPrice = parseFloat(product.price.toString().replace(/[^0-9.-]/g, ''));
+          if (!isNaN(numericPrice)) {
+            productPrices[product._id] = numericPrice;
+          }
+        }
+        productCosts[product._id] = product.cost || 0;
+        productTaxable[product._id] = product.isTaxable !== false; // Default to true if not set
+      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Fallback to initial products list
+      productOptions = products.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
+    }
+    
+    newRow.innerHTML = `
+      <div class="col-md-5">
+        <label class="form-label">Product *</label>
+        <div class="position-relative">
+          <input type="text" class="form-control product-search-input" placeholder="Type to search products..." autocomplete="off" data-product-id="" data-product-name="">
+          <input type="hidden" name="lineItems[product][]" class="product-select-hidden" value="" required>
+          <div class="product-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
+          </div>
+        </div>
+        <div class="form-text">
+          <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="openAddProductModal()">
+            <i class="bi bi-plus-circle"></i> Add new product
+          </button>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Quantity *</label>
+        <input type="number" name="lineItems[quantity][]" class="form-control quantity-input" min="1" step="1" value="1" required onchange="calculateRowTotal(this)">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Unit Price *</label>
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+          <input type="number" name="lineItems[unitPrice][]" class="form-control unit-price-input" step="0.01" min="0" value="0" required onchange="calculateRowTotal(this)">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Subtotal</label>
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+          <input type="text" class="form-control row-subtotal" value="0.00" readonly>
+        </div>
+      </div>
+      <div class="col-12 text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProductRow(this)">
+          <i class="bi bi-trash"></i> Remove
+        </button>
+      </div>
+    `;
+    rowsContainer.appendChild(newRow);
+    // Initialize searchable dropdown for the new row
+    const newInput = newRow.querySelector('.product-search-input');
+    if (newInput) {
+      initProductSearch(newInput);
+    }
+    calculateTotals();
+  }
+
+  function removeProductRow(button) {
+    const rows = document.querySelectorAll('.product-row');
+    if (rows.length <= 1) {
+      alert('At least one product is required');
+      return;
+    }
+    button.closest('.product-row').remove();
+    calculateTotals();
+  }
+
+  function calculateRowTotal(input) {
+    const row = input.closest('.product-row');
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+    const subtotal = quantity * unitPrice;
+    row.querySelector('.row-subtotal').value = subtotal.toFixed(2);
+    calculateTotals();
+  }
+
+  function calculateTotals() {
+    let subtotal = 0;
+    let taxableSubtotal = 0;
+    let totalCost = 0;
+    
+    document.querySelectorAll('.product-row').forEach(row => {
+      const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+      const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+      const itemSubtotal = quantity * unitPrice;
+      subtotal += itemSubtotal;
+      
+      // Get product cost
+      const productHidden = row.querySelector('.product-select-hidden');
+      const productId = productHidden ? productHidden.value : null;
+      const unitCost = productId ? (productCosts[productId] || 0) : 0;
+      const itemCost = quantity * unitCost;
+      totalCost += itemCost;
+      
+      // Check if product is taxable
+      const isTaxable = productId ? (productTaxable[productId] !== false) : true; // Default to taxable
+      
+      if (isTaxable) {
+        taxableSubtotal += itemSubtotal;
+      }
+    });
+    
+    const taxAmount = taxableSubtotal * TAX_RATE;
+    const total = subtotal + taxAmount;
+    const deliveryFee = parseFloat(document.getElementById('deliveryFee').value) || 0;
+    // Profit = (product prices - product costs) - delivery fee (sales tax is NOT deducted from profit)
+    // Which is: (subtotal - totalCost) - deliveryFee
+    const profit = (subtotal - totalCost) - deliveryFee;
+
+    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('taxAmount').textContent = '$' + taxAmount.toFixed(2);
+    document.getElementById('totalCost').textContent = '$' + totalCost.toFixed(2);
+    document.getElementById('total').textContent = '$' + total.toFixed(2);
+    
+    const profitElement = document.getElementById('profit');
+    const profitLabel = document.getElementById('profitLabel');
+    profitElement.textContent = '$' + profit.toFixed(2);
+    if (profit >= 0) {
+      profitElement.className = 'h5 text-success';
+      profitLabel.className = 'h5 text-success';
+    } else {
+      profitElement.className = 'h5 text-danger';
+      profitLabel.className = 'h5 text-danger';
+    }
+  }
+
+  // Refresh product dropdowns
+  async function refreshProductDropdowns() {
+    try {
+      const response = await fetch('/admin/products/api/list');
+      const updatedProducts = await response.json();
+      
+      // Update products array
+      products.length = 0;
+      updatedProducts.forEach(product => {
+        products.push({ _id: product._id, name: product.name, price: product.price || '', cost: product.cost || 0, isTaxable: product.isTaxable !== false });
+      });
+      
+      // Update productPrices, productCosts, and productTaxable objects
+      updatedProducts.forEach(product => {
+        if (product.price) {
+          const numericPrice = parseFloat(product.price.toString().replace(/[^0-9.-]/g, ''));
+          if (!isNaN(numericPrice)) {
+            productPrices[product._id] = numericPrice;
+          }
+        }
+        productCosts[product._id] = product.cost || 0;
+        productTaxable[product._id] = product.isTaxable !== false; // Default to true if not set
+      });
+      
+      // Note: Searchable inputs don't need to be updated as they filter from the products array
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+    }
+  }
+  
+  // Initialize searchable product dropdown
+  function initProductSearch(input) {
+    const hiddenInput = input.parentElement.querySelector('.product-select-hidden');
+    const dropdown = input.parentElement.querySelector('.product-dropdown-menu');
+    
+    // Filter and show dropdown
+    function filterProducts() {
+      const searchTerm = input.value.toLowerCase().trim();
+      dropdown.innerHTML = '';
+      
+      if (searchTerm === '') {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(searchTerm)
+      );
+      
+      if (filtered.length === 0) {
+        dropdown.innerHTML = '<div class="p-2 text-muted">No products found</div>';
+        dropdown.style.display = 'block';
+        return;
+      }
+      
+      filtered.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'p-2 product-dropdown-item';
+        item.style.cursor = 'pointer';
+        item.style.borderBottom = '1px solid #f0f0f0';
+        item.textContent = product.name;
+        item.addEventListener('mouseenter', function() {
+          this.style.backgroundColor = '#f8f9fa';
+        });
+        item.addEventListener('mouseleave', function() {
+          this.style.backgroundColor = 'white';
+        });
+        item.addEventListener('click', function() {
+          input.value = product.name;
+          input.setAttribute('data-product-id', product._id);
+          input.setAttribute('data-product-name', product.name);
+          hiddenInput.value = product._id;
+          dropdown.style.display = 'none';
+          
+          // Auto-populate price
+          const row = input.closest('.product-row');
+          if (row) {
+            const unitPriceInput = row.querySelector('.unit-price-input');
+            if (unitPriceInput && productPrices[product._id]) {
+              const currentPrice = parseFloat(unitPriceInput.value) || 0;
+              if (currentPrice === 0) {
+                unitPriceInput.value = productPrices[product._id].toFixed(2);
+                calculateRowTotal(unitPriceInput);
+              }
+            }
+            calculateTotals();
+          }
+        });
+        dropdown.appendChild(item);
+      });
+      
+      dropdown.style.display = 'block';
+    }
+    
+    // Event listeners
+    input.addEventListener('input', filterProducts);
+    input.addEventListener('focus', function() {
+      if (input.value.trim()) {
+        filterProducts();
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!input.parentElement.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    // Handle keyboard navigation
+    input.addEventListener('keydown', function(e) {
+      const items = dropdown.querySelectorAll('.product-dropdown-item');
+      if (items.length === 0) return;
+      
+      const currentIndex = Array.from(items).findIndex(item => 
+        item.style.backgroundColor === 'rgb(248, 249, 250)'
+      );
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        items.forEach((item, idx) => {
+          item.style.backgroundColor = idx === nextIndex ? '#f8f9fa' : 'white';
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        items.forEach((item, idx) => {
+          item.style.backgroundColor = idx === prevIndex ? '#f8f9fa' : 'white';
+        });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = items[currentIndex >= 0 ? currentIndex : 0];
+        if (selected) selected.click();
+      } else if (e.key === 'Escape') {
+        dropdown.style.display = 'none';
+      }
+    });
+  }
+  
+  // Auto-populate unit price when product is selected
+  window.handleProductSelect = function(element) {
+    const row = element.closest('.product-row');
+    if (!row) return;
+    
+    const hiddenInput = row.querySelector('.product-select-hidden');
+    const productId = hiddenInput ? hiddenInput.value : null;
+    const unitPriceInput = row.querySelector('.unit-price-input');
+    
+    if (productId && productPrices[productId] && unitPriceInput) {
+      // Only auto-fill if the price field is empty or zero
+      const currentPrice = parseFloat(unitPriceInput.value) || 0;
+      if (currentPrice === 0) {
+        unitPriceInput.value = productPrices[productId].toFixed(2);
+        calculateRowTotal(unitPriceInput);
+      }
+    }
+    
+    // Recalculate totals when product changes (taxable status might change)
+    calculateTotals();
+  };
+
+  // Refresh dropdowns when window regains focus (user returns from new tab)
+  let lastFocusTime = Date.now();
+  window.addEventListener('focus', function() {
+    const now = Date.now();
+    // Only refresh if focus was lost for more than 1 second (user was in another tab)
+    if (now - lastFocusTime > 1000) {
+      refreshProductDropdowns();
+    }
+    lastFocusTime = now;
+  });
+
+  window.addEventListener('blur', function() {
+    lastFocusTime = Date.now();
+  });
+
+  // Check if we're returning from product creation (has refresh parameter)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('refresh') === '1') {
+    refreshProductDropdowns();
+    // Remove the refresh parameter from URL
+    urlParams.delete('refresh');
+    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  // Calculate totals on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    calculateTotals();
+    // Recalculate when any input changes
+    document.querySelectorAll('.quantity-input, .unit-price-input, #deliveryFee').forEach(input => {
+      input.addEventListener('input', calculateTotals);
+    });
+    // Initialize searchable product inputs
+    document.querySelectorAll('.product-search-input').forEach(input => {
+      initProductSearch(input);
+    });
+  });
+</script>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addProductForm">
+          <div class="mb-3">
+            <label for="newProductName" class="form-label">Product Name *</label>
+            <input type="text" class="form-control" id="newProductName" required>
+          </div>
+          <div class="mb-3">
+            <label for="newProductPrice" class="form-label">Price</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control" id="newProductPrice" placeholder="e.g., 25000">
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="newProductTaxable" checked>
+              <label class="form-check-label" for="newProductTaxable">
+                Subject to Sales Tax
+              </label>
+            </div>
+          </div>
+          <div id="addProductError" class="alert alert-danger d-none" role="alert"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveNewProduct()">Create Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Open add product modal
+  window.openAddProductModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+    document.getElementById('addProductForm').reset();
+    document.getElementById('newProductTaxable').checked = true;
+    document.getElementById('addProductError').classList.add('d-none');
+    modal.show();
+  };
+
+  // Save new product via AJAX
+  async function saveNewProduct() {
+    const name = document.getElementById('newProductName').value.trim();
+    const price = document.getElementById('newProductPrice').value.trim();
+    const isTaxable = document.getElementById('newProductTaxable').checked;
+    const errorDiv = document.getElementById('addProductError');
+
+    if (!name) {
+      errorDiv.textContent = 'Product name is required';
+      errorDiv.classList.remove('d-none');
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/products/api/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          price: price,
+          isTaxable: isTaxable,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error creating product');
+      }
+
+      // Add product to dropdowns
+      const newProduct = data.product;
+      if (price) {
+        const numericPrice = parseFloat(price.replace(/[^0-9.-]/g, ''));
+        if (!isNaN(numericPrice)) {
+          productPrices[newProduct._id] = numericPrice;
+        }
+      }
+      productCosts[newProduct._id] = newProduct.cost || 0;
+      productTaxable[newProduct._id] = newProduct.isTaxable !== false;
+      
+      // Add to products array for future use (searchable inputs will automatically include it)
+      products.push({ _id: newProduct._id, name: newProduct.name, price: newProduct.price || '', cost: newProduct.cost || 0, isTaxable: newProduct.isTaxable });
+
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+      modal.hide();
+
+      // Show success message
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-success alert-dismissible fade show';
+      alert.innerHTML = `
+        Product "${newProduct.name}" created successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.querySelector('.admin-content').insertBefore(alert, document.querySelector('.admin-content').firstChild);
+      setTimeout(() => alert.remove(), 3000);
+
+    } catch (error) {
+      console.error('Error creating product:', error);
+      errorDiv.textContent = error.message || 'Error creating product. Please try again.';
+      errorDiv.classList.remove('d-none');
+    }
+  }
+
+  // Allow Enter key to submit form in modal
+  document.getElementById('addProductForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveNewProduct();
+  });
+</script>
+
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,185 @@
+<%- include('../partials/admin-header', { title: 'Sale Detail', currentPage: 'sales' }) %>
+<div class="mb-3">
+  <a href="/admin/sales" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+</div>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="h5 mb-0">Customer Information</h3>
+      </div>
+      <div class="card-body">
+        <p><strong>Name:</strong><br>
+          <a href="/admin/customers/<%= sale.customer._id %>">
+            <%= sale.customer.name %>
+          </a>
+        </p>
+        <% if (sale.customer.email) { %>
+          <p><strong>Email:</strong><br>
+            <a href="mailto:<%= sale.customer.email %>"><%= sale.customer.email %></a>
+          </p>
+        <% } %>
+        <% if (sale.customer.phone) { %>
+          <p><strong>Phone:</strong><br>
+            <a href="tel:<%= sale.customer.phone %>"><%= sale.customer.phone %></a>
+          </p>
+        <% } %>
+        <p><strong>Sale Date:</strong><br>
+          <%= new Date(sale.saleDate).toLocaleDateString() %>
+        </p>
+        <p><strong>Payment Status:</strong><br>
+          <% if (sale.isPaid) { %>
+            <span class="badge bg-success" style="font-size: 1rem;">Paid</span>
+          <% } else { %>
+            <span class="badge bg-warning" style="font-size: 1rem;">Unpaid</span>
+          <% } %>
+        </p>
+        <p class="text-muted small"><strong>Created:</strong> <%= new Date(sale.createdAt).toLocaleString() %></p>
+        <% if (sale.updatedAt && sale.updatedAt.toString() !== sale.createdAt.toString()) { %>
+          <p class="text-muted small"><strong>Last Updated:</strong> <%= new Date(sale.updatedAt).toLocaleString() %></p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="h5 mb-0">Sale Summary</h3>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <strong>Subtotal:</strong>
+          <span>$<%= (sale.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <strong>Sales Tax (<%= ((sale.taxRate || 0.0625) * 100).toFixed(2) %>% on taxable items):</strong>
+          <span>$<%= (sale.taxAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <strong>Total Cost:</strong>
+          <span>$<%= (sale.totalCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <% if (sale.deliveryFee && sale.deliveryFee > 0) { %>
+        <div class="d-flex justify-content-between mb-2">
+          <strong>Delivery Fee:</strong>
+          <span>$<%= (sale.deliveryFee || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <% } %>
+        <hr>
+        <div class="d-flex justify-content-between mb-2">
+          <strong class="h4">Total:</strong>
+          <span class="h4 text-primary">$<%= (sale.total || sale.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <strong class="h5 <%= (sale.profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">Profit:</strong>
+          <span class="h5 <%= (sale.profit || 0) >= 0 ? 'text-success' : 'text-danger' %>">$<%= (sale.profit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+        </div>
+        <div class="mt-3 p-2 bg-light rounded">
+          <small class="text-muted">
+            <strong>Profit Breakdown:</strong><br>
+            Gross Profit (Subtotal - Total Cost): $<%= ((sale.subtotal || 0) - (sale.totalCost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %><br>
+            <% if (sale.deliveryFee && sale.deliveryFee > 0) { %>
+            Less Delivery Fee: -$<%= (sale.deliveryFee || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %><br>
+            <% } %>
+            <strong>Net Profit: $<%= (sale.profit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong><br>
+            <em class="text-muted">Note: Sales tax is not deducted from profit</em>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-header">
+    <h3 class="h5 mb-0">Products</h3>
+  </div>
+  <div class="card-body">
+    <% if (sale.lineItems && sale.lineItems.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-end">Quantity</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Unit Cost</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-end">Cost Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% sale.lineItems.forEach(item => { %>
+                <tr>
+                  <td>
+                    <% if (item.product && item.product.slug) { %>
+                      <a href="/products/<%= item.product.slug %>" target="_blank">
+                        <%= item.product.name %>
+                      </a>
+                    <% } else if (item.product && item.product.name) { %>
+                      <%= item.product.name %>
+                    <% } else { %>
+                      N/A
+                    <% } %>
+                  </td>
+                  <td class="text-end"><%= item.quantity || 1 %></td>
+                  <td class="text-end">$<%= (item.unitPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                  <td class="text-end">$<%= (item.unitCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                  <td class="text-end"><strong>$<%= (item.subtotal || (item.quantity || 1) * (item.unitPrice || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></td>
+                  <td class="text-end">$<%= (item.costTotal || (item.quantity || 1) * (item.unitCost || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                </tr>
+              <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else if (sale.product) { %>
+      <!-- Legacy single product display for backward compatibility -->
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <% if (sale.product.slug) { %>
+                  <a href="/products/<%= sale.product.slug %>" target="_blank">
+                    <%= sale.product.name %>
+                  </a>
+                <% } else { %>
+                  <%= sale.product.name %>
+                <% } %>
+              </td>
+              <td class="text-end"><strong>$<%= (sale.amount || sale.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p class="text-muted">No products in this sale.</p>
+    <% } %>
+  </div>
+</div>
+
+<% if (sale.notes) { %>
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3 class="h5 mb-0">Notes</h3>
+    </div>
+    <div class="card-body">
+      <div class="border rounded p-3 bg-light"><%= (sale.notes || '').replace(/\n/g, '<br>') %></div>
+    </div>
+  </div>
+<% } %>
+
+<div class="mt-4">
+  <a href="/admin/sales/<%= sale._id %>/edit" class="btn btn-primary">Edit Sale</a>
+  <form action="/admin/sales/<%= sale._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this sale?')">
+    <button class="btn btn-outline-danger">Delete</button>
+  </form>
+</div>
+
+<%- include('../partials/admin-footer') %>

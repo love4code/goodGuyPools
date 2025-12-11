@@ -1,0 +1,43 @@
+<%- include('../partials/admin-header', { title: customer ? 'Edit Customer' : 'New Customer', currentPage: 'customers' }) %>
+<div class="mb-3">
+  <a href="/admin/customers" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+</div>
+<form action="<%= customer ? '/admin/customers/' + customer._id : '/admin/customers' %>" method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Name *</label>
+    <input type="text" name="name" class="form-control" value="<%= customer ? customer.name : '' %>" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Phone</label>
+    <input type="text" name="phone" class="form-control" value="<%= customer ? customer.phone : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Email</label>
+    <input type="email" name="email" class="form-control" value="<%= customer ? customer.email : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Address</label>
+    <input type="text" name="address" class="form-control" value="<%= customer ? customer.address : '' %>">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">City</label>
+    <input type="text" name="city" class="form-control" value="<%= customer ? customer.city : '' %>">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">State</label>
+    <input type="text" name="state" class="form-control" value="<%= customer ? customer.state : '' %>">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Zip Code</label>
+    <input type="text" name="zipCode" class="form-control" value="<%= customer ? customer.zipCode : '' %>">
+  </div>
+  <div class="col-md-12">
+    <label class="form-label">Notes</label>
+    <textarea name="notes" rows="4" class="form-control"><%= customer ? customer.notes : '' %></textarea>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary"><%= customer ? 'Save Changes' : 'Create Customer' %></button>
+    <a href="/admin/customers" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+<%- include('../partials/admin-footer') %>

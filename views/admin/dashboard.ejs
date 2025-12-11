@@ -59,6 +59,48 @@
   </div>
 </div>
 
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="display-6"><%= stats.customerCount || 0 %></div>
+        <div class="text-muted">Customers</div>
+        <a href="/admin/customers" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="display-6"><%= stats.saleCount || 0 %></div>
+        <div class="text-muted">Total Sales</div>
+        <a href="/admin/sales" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4 text-success">$<%= (stats.totalSalesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></div>
+        <div class="text-muted">Total Revenue</div>
+        <div class="mt-2">
+          <small class="text-success">Paid: $<%= (stats.paidSalesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></small><br>
+          <small class="text-warning">Unpaid: $<%= (stats.unpaidSalesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="display-6"><%= stats.inquiryCount || 0 %></div>
+        <div class="text-muted">Inquiries</div>
+        <a href="/admin/inquiries" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-md-12">
     <div class="card">
@@ -121,7 +163,71 @@
 </div>
 
 <div class="row g-4 mt-2">
-  <div class="col-md-12">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Recent Sales</h2>
+        <a href="/admin/sales" class="btn btn-sm btn-outline-secondary">View All</a>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Products</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentSales && recentSales.length) { %>
+                <% recentSales.forEach(sale => { %>
+                  <tr>
+                    <td><%= new Date(sale.saleDate).toLocaleDateString() %></td>
+                    <td><%= sale.customer ? sale.customer.name : 'N/A' %></td>
+                    <td>
+                      <% if (sale.lineItems && sale.lineItems.length > 0) { %>
+                        <% if (sale.lineItems.length === 1) { %>
+                          <%= sale.lineItems[0].product ? sale.lineItems[0].product.name : 'N/A' %>
+                        <% } else { %>
+                          <%= sale.lineItems.length %> products
+                        <% } %>
+                      <% } else if (sale.product) { %>
+                        <%= sale.product.name %>
+                      <% } else { %>
+                        N/A
+                      <% } %>
+                    </td>
+                    <td><strong>$<%= (sale.total || sale.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></td>
+                    <td>
+                      <% if (sale.isPaid) { %>
+                        <span class="badge bg-success">Paid</span>
+                      <% } else { %>
+                        <span class="badge bg-warning">Unpaid</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/admin/sales/<%= sale._id %>" class="btn btn-sm btn-outline-primary">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-center text-muted">No sales yet.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
     <div class="card">
       <div class="card-body">
         <h2 class="h5">Quick Links</h2>
@@ -134,6 +240,12 @@
           </a>
           <a href="/admin/services/new" class="btn btn-outline-primary">
             <i class="bi bi-plus-circle"></i> Add Service
+          </a>
+          <a href="/admin/customers/new" class="btn btn-outline-primary">
+            <i class="bi bi-person-plus"></i> Add Customer
+          </a>
+          <a href="/admin/sales/new" class="btn btn-outline-primary">
+            <i class="bi bi-cash-stack"></i> Add Sale
           </a>
           <a href="/admin/settings" class="btn btn-outline-primary">
             <i class="bi bi-gear"></i> Settings

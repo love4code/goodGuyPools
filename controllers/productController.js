@@ -6,12 +6,18 @@ const mongoose = require('mongoose');
 
 // Admin Controllers
 exports.list = async (req, res) => {
-  const products = await Product.find().sort({ order: 1, createdAt: -1 });
+  const products = await Product.find()
+    .populate('mainImage')
+    .sort({ order: 1, createdAt: -1 });
   res.render('admin/products', { title: 'Products', products });
 };
 
 exports.newForm = (req, res) => {
-  res.render('admin/product-form', { title: 'New Product', product: null });
+  res.render('admin/product-form', {
+    title: 'New Product',
+    product: null,
+    returnTo: req.query.returnTo || '',
+  });
 };
 
 exports.create = async (req, res) => {
@@ -144,6 +150,7 @@ exports.create = async (req, res) => {
       gallery: allGalleryIds,
       sizes: sizesArray,
       price: req.body.price || '',
+      cost: Number(req.body.cost) || 0,
       sku: sku || '',
       category: category || '',
       brand: brand || '',
@@ -166,10 +173,16 @@ exports.create = async (req, res) => {
       notes: notes || '',
       isActive: isActive === 'on',
       isFeatured: isFeatured === 'on',
+      isTaxable: req.body.isTaxable === 'on',
       order: Number(order) || 0,
     });
     req.flash('success', 'Product created');
-    res.redirect('/admin/products');
+    // Redirect back to the page that linked here, or to products list
+    const returnTo =
+      req.body.returnTo || req.query.returnTo || '/admin/products';
+    // Add refresh parameter to trigger dropdown refresh
+    const separator = returnTo.includes('?') ? '&' : '?';
+    res.redirect(returnTo + separator + 'refresh=1');
   } catch (e) {
     console.error('Error creating product:', e);
     req.flash('error', e.message || 'Error creating product');
@@ -178,6 +191,8 @@ exports.create = async (req, res) => {
       name: req.body.name || '',
       description: req.body.description || '',
       shortDescription: req.body.shortDescription || '',
+      price: req.body.price || '',
+      cost: Number(req.body.cost) || 0,
       sku: req.body.sku || '',
       category: req.body.category || '',
       brand: req.body.brand || '',
@@ -200,6 +215,7 @@ exports.create = async (req, res) => {
       notes: req.body.notes || '',
       isActive: req.body.isActive === 'on',
       isFeatured: req.body.isFeatured === 'on',
+      isTaxable: req.body.isTaxable === 'on',
       order: req.body.order || 0,
       mainImage: req.body.mainImage || '',
       gallery: req.body.gallery || '',
@@ -366,6 +382,7 @@ exports.update = async (req, res) => {
       gallery: allGalleryIds,
       sizes: sizesArray,
       price: req.body.price || '',
+      cost: Number(req.body.cost) || 0,
       sku: sku || '',
       category: category || '',
       brand: brand || '',
@@ -388,6 +405,7 @@ exports.update = async (req, res) => {
       notes: notes || '',
       isActive: isActive === 'on',
       isFeatured: isFeatured === 'on',
+      isTaxable: req.body.isTaxable === 'on',
       order: Number(order) || 0,
       updatedAt: new Date(),
     };
@@ -406,6 +424,44 @@ exports.remove = async (req, res) => {
   await Product.findByIdAndDelete(req.params.id);
   req.flash('success', 'Product deleted');
   res.redirect('/admin/products');
+};
+
+// API endpoint for fetching products (for dropdowns)
+exports.apiList = async (req, res) => {
+  const products = await Product.find()
+    .sort({ name: 1 })
+    .select('_id name price cost isTaxable');
+  res.json(products);
+};
+
+// API endpoint for creating products (for AJAX)
+exports.apiCreate = async (req, res) => {
+  try {
+    const { name, price, cost, isTaxable } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Product name is required' });
+    }
+    const product = await Product.create({
+      name: name.trim(),
+      price: price || '',
+      cost: Number(cost) || 0,
+      isTaxable: isTaxable !== false,
+      isActive: true,
+    });
+    res.json({
+      success: true,
+      product: {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        cost: product.cost || 0,
+        isTaxable: product.isTaxable,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ error: error.message || 'Error creating product' });
+  }
 };
 
 // Public Controllers
